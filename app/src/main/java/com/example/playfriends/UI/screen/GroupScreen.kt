@@ -7,6 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -27,6 +29,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
 import com.example.playfriends.UI.component.AppTopBar
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +55,21 @@ fun GroupScreen(navController: NavController) {
     val cardColor = Color(0xFFFAFFFA)
     val titleColor = Color(0xFF228B22)
     val checkboxColor = Color(0xFF7E57C2)
+    
+    val options = listOf("놀이공원", "공방", "팝업", "방탈출 카페")
+    var checkedStates by remember { mutableStateOf(List(options.size) { false }) }
+    val scrollState = rememberScrollState()
+    
+    // 팝업 관련 상태
+    var showPopup by remember { mutableStateOf(false) }
+    val selectedContents = remember { mutableStateListOf<String>() }
+    var selectedContentsCheckedStates by remember { mutableStateOf(mutableMapOf<String, Boolean>()) }
+    
+    // 추가 컨텐츠 옵션들
+    val additionalContents = listOf(
+        "식당", "카페", "박물관", "영화관", "노래방", "볼링장", 
+        "당구장", "보드게임카페", "만화카페", "PC방", "스포츠센터", "수영장"
+    )
 
     Scaffold(
         topBar = {
@@ -66,7 +85,7 @@ fun GroupScreen(navController: NavController) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 24.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -200,19 +219,20 @@ fun GroupScreen(navController: NavController) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "⭐ 놀이 콘텐츠 추천 ⭐",
+                        "취향에 맞춰 추천받은 컨텐츠",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        fontSize = 16.sp,
+                        color = titleColor
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    val options = listOf("놀이공원", "공방", "팝업", "방탈출 카페")
-                    var checkedStates by remember { mutableStateOf(List(options.size) { false }) }
+
                     
                     options.forEachIndexed { index, option ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Checkbox(
                                 checked = checkedStates[index],
                                 onCheckedChange = { isChecked ->
@@ -220,19 +240,55 @@ fun GroupScreen(navController: NavController) {
                                         this[index] = isChecked
                                     }
                                 },
-                                colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
+                                colors = CheckboxDefaults.colors(checkedColor = checkboxColor),
+                                modifier = Modifier.size(20.dp)
                             )
-                            Text(option, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = option,
+                                fontSize = 16.sp
+                            )
                         }
                         if (index < options.size - 1) {
-                            Spacer(modifier = Modifier.height(2.dp))
+                            Spacer(modifier = Modifier.height(7.dp))
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
 
+                    // 선택한 컨텐츠가 있으면 표시
+                    if (selectedContents.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "내가 선택한 컨텐츠",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = titleColor
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        selectedContents.forEach { content ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = selectedContentsCheckedStates[content] ?: false,
+                                    onCheckedChange = { isChecked ->
+                                        selectedContentsCheckedStates = selectedContentsCheckedStates.toMutableMap().apply {
+                                            put(content, isChecked)
+                                        }
+                                    },
+                                    colors = CheckboxDefaults.colors(checkedColor = checkboxColor),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(content, fontSize = 16.sp)
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
                     Button(
-                        onClick = { },
+                        onClick = { showPopup = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9CCC65)),
                         shape = RoundedCornerShape(50),
                         modifier = Modifier.align(Alignment.End)
@@ -246,19 +302,97 @@ fun GroupScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 하단 버튼
-            Button(
-                onClick = { },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
-                shape = RoundedCornerShape(32.dp)
-            ) {
-                Text("상세 계획 추천 받으러 가기", color = Color.White, fontSize = 16.sp)
-            }
+            // 하단 버튼 (추천 컨텐츠 또는 선택한 컨텐츠가 하나라도 체크되어 있을 때만 표시)
+            if (checkedStates.any { it } || selectedContentsCheckedStates.values.any { it }) {
+                Button(
+                    onClick = { },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
+                    shape = RoundedCornerShape(32.dp)
+                ) {
+                    Text("상세 계획 추천 받으러 가기", color = Color.White, fontSize = 16.sp)
+                }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+            
+            // 체크박스가 체크되면 자동으로 스크롤
+            LaunchedEffect(checkedStates.any { it } || selectedContentsCheckedStates.values.any { it }) {
+                if (checkedStates.any { it } || selectedContentsCheckedStates.values.any { it }) {
+                    scrollState.animateScrollTo(scrollState.maxValue)
+                }
+            }
+        }
+        
+        // 컨텐츠 선택 팝업
+        if (showPopup) {
+            var tempSelectedContents by remember { mutableStateOf(selectedContents.toMutableList()) }
+            
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showPopup = false },
+                title = {
+                    Text(
+                        "컨텐츠 선택",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                text = {
+                    Column {
+                        additionalContents.forEach { content ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                Checkbox(
+                                    checked = tempSelectedContents.contains(content),
+                                    onCheckedChange = { isChecked ->
+                                        tempSelectedContents = if (isChecked) {
+                                            tempSelectedContents.toMutableList().apply { add(content) }
+                                        } else {
+                                            tempSelectedContents.toMutableList().apply { remove(content) }
+                                        }
+                                    },
+                                    colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
+                                )
+                                Text(content, fontSize = 16.sp)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            selectedContents.clear()
+                            selectedContents.addAll(tempSelectedContents)
+                            // 새로 추가된 컨텐츠들의 체크 상태를 true로 초기화 (체크된 상태로 표시)
+                            tempSelectedContents.forEach { content ->
+                                if (!selectedContentsCheckedStates.containsKey(content)) {
+                                    selectedContentsCheckedStates = selectedContentsCheckedStates.toMutableMap().apply {
+                                        put(content, true)
+                                    }
+                                }
+                            }
+                            showPopup = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = checkboxColor)
+                    ) {
+                        Text("확인")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { showPopup = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("취소")
+                    }
+                }
+            )
         }
     }
 }
