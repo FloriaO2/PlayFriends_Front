@@ -72,14 +72,21 @@ fun TestScreen(navController: NavController) {
                     .width(80.dp)
                     .height(36.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Text(
-                    "다음에",
-                    color = Color(0xFF228B22),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "다음에",
+                        color = Color(0xFF228B22),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
             
             // 중앙: 제목
@@ -112,14 +119,21 @@ fun TestScreen(navController: NavController) {
                     .width(80.dp)
                     .height(36.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Text(
-                    "완료",
-                    color = Color(0xFF228B22),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "완료",
+                        color = Color(0xFF228B22),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
 
@@ -195,46 +209,48 @@ fun FoodPreferenceTab(
                     )
                     
                     // 3열로 배치하기 위해 옵션들을 3개씩 묶기
-                    options.chunked(3).forEach { rowOptions ->
+                    options.chunked(3).forEachIndexed { rowIndex, rowOptions ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 2.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                                                // 첫 번째 열
-                    if (rowOptions.isNotEmpty()) {
-                        PreferenceItem(
-                            option = rowOptions[0], 
-                            category = title,
-                            foodPreferences = foodPreferences,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    
-                    // 두 번째 열
-                    if (rowOptions.size > 1) {
-                        PreferenceItem(
-                            option = rowOptions[1], 
-                            category = title,
-                            foodPreferences = foodPreferences,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                    
-                    // 세 번째 열
-                    if (rowOptions.size > 2) {
-                        PreferenceItem(
-                            option = rowOptions[2], 
-                            category = title,
-                            foodPreferences = foodPreferences,
-                            modifier = Modifier.weight(1f)
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                            // 첫 번째 열
+                            if (rowOptions.isNotEmpty()) {
+                                PreferenceItem(
+                                    option = rowOptions[0], 
+                                    category = title,
+                                    foodPreferences = foodPreferences,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            
+                            // 두 번째 열
+                            if (rowOptions.size > 1) {
+                                PreferenceItem(
+                                    option = rowOptions[1], 
+                                    category = title,
+                                    foodPreferences = foodPreferences,
+                                    modifier = if (rowOptions.size == 2) Modifier.weight(2f).offset(x = (-4).dp) else Modifier.weight(1f)
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                            
+                            // 세 번째 열 (마지막 행에 항목이 2개만 있으면 표시하지 않음)
+                            if (rowOptions.size > 2) {
+                                PreferenceItem(
+                                    option = rowOptions[2], 
+                                    category = title,
+                                    foodPreferences = foodPreferences,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else if (rowOptions.size == 2) {
+                                // 마지막 행에 항목이 2개만 있으면 빈 공간 추가하지 않음
+                            } else {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
                         }
                     }
                 }
@@ -285,7 +301,7 @@ fun PreferenceItem(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = option,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             color = if (isChecked) Color(0xFF228B22) else Color(0xFF666666),
             fontWeight = if (isChecked) FontWeight.Medium else FontWeight.Normal
         )

@@ -6,6 +6,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -14,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,11 +81,20 @@ fun ProfileScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.width(24.dp))
 
-                // 우측: 아이디와 회원 탈퇴 버튼
+                // 우측: 닉네임, 아이디와 회원 탈퇴 버튼
                 Column(
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.End
                 ) {
+                    Text(
+                        "닉네임 : ABC",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xA9000000)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
                     Text(
                         "아이디 : ABCDE",
                         fontSize = 18.sp,
@@ -93,29 +104,32 @@ fun ProfileScreen(navController: NavController) {
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    Text(
-                        "회원 탈퇴",
-                        color = Color.Red,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier.clickable { /* TODO: 회원 탈퇴 로직 */ }
+                    ) {
+                        Text(
+                            "회원 탈퇴",
+                            color = Color(0xFF8B0000),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Edit Profile 버튼
             Button(
                 onClick = { navController.navigate("test") },
                 shape = RoundedCornerShape(50),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA1D0A3)),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
             ) {
-                Icon(Icons.Default.Settings, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Edit Profile", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                Text("취향 테스트 다시 보러 가기", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
             }
 
             Spacer(modifier = Modifier.height(30.dp))

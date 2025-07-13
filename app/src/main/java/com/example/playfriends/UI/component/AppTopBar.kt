@@ -1,6 +1,7 @@
 package com.example.playfriends.UI.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -31,12 +32,27 @@ fun AppTopBar(
             .height(64.dp)
             .background(
                 brush = Brush.horizontalGradient(
-                    colors = listOf(Color(0xFFAFEDAF), Color(0xFF8FD68F))
+                    colors = listOf(Color(0xFF5F9765), Color(0xFF5F9765))
                 )
-            )
-            .padding(horizontal = 16.dp),
+            ),
         contentAlignment = Alignment.Center
     ) {
+        // 아래쪽 border만 추가 (전체 너비)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .background(Color(0x20000000))
+                .align(Alignment.BottomCenter)
+        )
+        
+        // 내용을 담는 Box (padding 적용)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
         // 로고 이미지 - 상단바 정중앙에 배치
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.topbar_logo),
@@ -74,6 +90,7 @@ fun AppTopBar(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
     }
 }
 
