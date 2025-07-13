@@ -2,6 +2,7 @@ package com.example.playfriends.UI.screen
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,6 +17,15 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -29,6 +39,7 @@ import com.example.playfriends.UI.component.GroupCardHeader
 import com.example.playfriends.UI.component.AppTopBar
 import com.example.playfriends.UI.component.ScheduleTimeline
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
     val fabExpanded = remember { mutableStateOf(false) }
@@ -41,6 +52,13 @@ fun HomeScreen(navController: NavController) {
     
     // 현재 열린 그룹을 추적하는 상태
     var expandedGroupId by remember { mutableStateOf<String?>(null) }
+    
+    // 팝업 관련 상태
+    var showCreateGroupDialog by remember { mutableStateOf(false) }
+    var showJoinGroupDialog by remember { mutableStateOf(false) }
+    var showGroupCreatedDialog by remember { mutableStateOf(false) }
+    var groupName by remember { mutableStateOf("") }
+    var groupId by remember { mutableStateOf("") }
 
     Scaffold(
         containerColor = backgroundColor,
@@ -52,20 +70,60 @@ fun HomeScreen(navController: NavController) {
         },
         floatingActionButton = {
             Column(horizontalAlignment = Alignment.End) {
-                if (fabExpanded.value) {
-                    Button(
-                        onClick = { /* Join Group */ },
-                        modifier = Modifier.padding(bottom = 8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD9E9DC))
-                    ) {
-                        Text("Join Group", color = Color.Black)
-                    }
-                    Button(
-                        onClick = { /* Create Group */ },
-                        modifier = Modifier.padding(bottom = 8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD9E9DC))
-                    ) {
-                        Text("Create Group", color = Color.Black)
+                AnimatedVisibility(
+                    visible = fabExpanded.value,
+                    enter = slideInVertically(
+                        animationSpec = tween(300),
+                        initialOffsetY = { it / 2 }
+                    ) + scaleIn(
+                        animationSpec = tween(300),
+                        initialScale = 0.3f
+                    ) + fadeIn(animationSpec = tween(300)),
+                    exit = slideOutVertically(
+                        animationSpec = tween(300),
+                        targetOffsetY = { it / 2 }
+                    ) + scaleOut(
+                        animationSpec = tween(300),
+                        targetScale = 0.3f
+                    ) + fadeOut(animationSpec = tween(300))
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Button(
+                            onClick = { 
+                                showJoinGroupDialog = true
+                                fabExpanded.value = false
+                            },
+                            modifier = Modifier
+                                .padding(bottom = 12.dp)
+                                .height(48.dp)
+                                .border(
+                                    width = 1.dp,
+                                    color = Color(0x33000000),
+                                    shape = RoundedCornerShape(8.dp)
+                                ),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD9E9DC)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Join Group", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        }
+                        Button(
+                            onClick = { 
+                                showCreateGroupDialog = true
+                                fabExpanded.value = false
+                            },
+                            modifier = Modifier
+                                .padding(bottom = 12.dp)
+                                .height(48.dp)
+                                .border(
+                                    width = 1.dp,
+                                    color = Color(0x33000000),
+                                    shape = RoundedCornerShape(8.dp)
+                                ),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD9E9DC)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Create Group", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        }
                     }
                 }
                 FloatingActionButton(
@@ -159,6 +217,162 @@ fun HomeScreen(navController: NavController) {
             }
 
             Spacer(modifier = Modifier.height(80.dp))
+        }
+        
+        // Create Group 팝업
+        if (showCreateGroupDialog) {
+            var tempGroupName by remember { mutableStateOf("") }
+            
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showCreateGroupDialog = false },
+                title = {
+                    Text(
+                        "그룹 생성",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            "그룹 이름을 입력해주세요",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = tempGroupName,
+                            onValueChange = { tempGroupName = it },
+                            placeholder = { Text("그룹 이름") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                unfocusedBorderColor = Color(0xFF8DB38C),
+                                focusedBorderColor = Color(0xFF8DB38C)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (tempGroupName.isNotBlank()) {
+                                groupName = tempGroupName
+                                groupId = "GROUP_${(1000..9999).random()}" // 임시 그룹 ID 생성
+                                showCreateGroupDialog = false
+                                showGroupCreatedDialog = true
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57))
+                    ) {
+                        Text("그룹 생성하기")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { showCreateGroupDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("취소")
+                    }
+                }
+            )
+        }
+        
+        // 그룹 생성 완료 팝업
+        if (showGroupCreatedDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showGroupCreatedDialog = false },
+                title = {
+                    Text(
+                        "그룹이 생성되었습니다!",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = groupId,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4C6A57),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            "Join Group 버튼을 누르고 이 초대코드를 입력하면 그룹에 참여할 수 있습니다.",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { showGroupCreatedDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57))
+                    ) {
+                        Text("확인")
+                    }
+                }
+            )
+        }
+        
+        // Join Group 팝업
+        if (showJoinGroupDialog) {
+            var inviteCode by remember { mutableStateOf("") }
+            
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showJoinGroupDialog = false },
+                title = {
+                    Text(
+                        "그룹 참여",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            "초대코드를 입력해주세요",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        OutlinedTextField(
+                            value = inviteCode,
+                            onValueChange = { inviteCode = it },
+                            placeholder = { Text("초대코드") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                unfocusedBorderColor = Color(0xFF8DB38C),
+                                focusedBorderColor = Color(0xFF8DB38C)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (inviteCode.isNotBlank()) {
+                                // TODO: 그룹 참여 로직 구현
+                                showJoinGroupDialog = false
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57))
+                    ) {
+                        Text("참여하기")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { showJoinGroupDialog = false },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
+                    ) {
+                        Text("취소")
+                    }
+                }
+            )
         }
     }
 }

@@ -157,7 +157,18 @@ fun GroupScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // 가로줄
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color(0xFFE0E0E0))
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
 
             // 취향 분석 레포트 타이틀
             Text(
@@ -177,7 +188,7 @@ fun GroupScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .size(200.dp)
+                    .size(240.dp)
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val hexPath = Path()
@@ -208,7 +219,7 @@ fun GroupScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             // 놀이 콘텐츠 추천 카드
             Card(
@@ -305,7 +316,7 @@ fun GroupScreen(navController: NavController) {
             // 하단 버튼 (추천 컨텐츠 또는 선택한 컨텐츠가 하나라도 체크되어 있을 때만 표시)
             if (checkedStates.any { it } || selectedContentsCheckedStates.values.any { it }) {
                 Button(
-                    onClick = { },
+                    onClick = { navController.navigate("groupPlan") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),

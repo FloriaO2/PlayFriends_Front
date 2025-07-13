@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
@@ -152,7 +153,8 @@ fun ScheduleTimeline(
     moves: List<String>,
     moveColors: List<Color>,
     moveIcons: List<String>,
-    chipColor: Color
+    chipColor: Color,
+    leftChipWidth: Dp = 70.dp
 ) {
     val timelineX = 70.dp // 수직선의 x좌표(왼쪽 여백)
     val timelineWidth = 2.dp
@@ -257,8 +259,8 @@ fun ScheduleTimeline(
                                 color = moveColors.getOrNull(moveIdx) ?: Color.LightGray,
                                 modifier = Modifier
                                     .align(Alignment.CenterStart)
-                                    .offset(x = timelineX - 70.dp)
-                                    .width(70.dp)
+                                    .offset(x = timelineX - leftChipWidth)
+                                    .width(leftChipWidth)
                                     .height(20.dp)
                                     .onGloballyPositioned { coordinates ->
                                         leftMaxWidthPx = maxOf(leftMaxWidthPx, coordinates.size.width)

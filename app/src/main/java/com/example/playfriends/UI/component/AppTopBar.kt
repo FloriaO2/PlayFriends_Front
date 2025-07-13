@@ -31,49 +31,48 @@ fun AppTopBar(
             .height(64.dp)
             .background(
                 brush = Brush.horizontalGradient(
-                    colors = listOf(Color(0xFFB3E8D4), Color(0xFFA2DCAB))
+                    colors = listOf(Color(0xFFAFEDAF), Color(0xFF8FD68F))
                 )
             )
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxSize()
+        // 로고 이미지 - 상단바 정중앙에 배치
+        androidx.compose.foundation.Image(
+            painter = painterResource(id = R.drawable.topbar_logo),
+            contentDescription = "TopBar Logo",
+            modifier = Modifier
+                .size(40.dp)
+                .clickable { onLogoClick() }
+                .align(Alignment.CenterStart)
+                .offset(y = 0.2.dp),
+            contentScale = ContentScale.Fit
+        )
+        
+        // 앱 이름 - 상단바 정중앙에 배치
+        Text(
+            text = appName,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.align(Alignment.Center)
+        )
+        
+        // 프로필 아이콘 - 상단바 우측에 배치
+        Box(
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF9575CD))
+                .clickable { onProfileClick() }
+                .align(Alignment.CenterEnd),
+            contentAlignment = Alignment.Center
         ) {
-            // 로고 이미지
-            androidx.compose.foundation.Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = "Logo",
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable { onLogoClick() },
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = appName,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
+                profileInitial,
                 color = Color.White,
-                modifier = Modifier.align(Alignment.CenterVertically)
+                fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.weight(1f))
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF9575CD))
-                    .clickable { onProfileClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    profileInitial,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
         }
     }
 }

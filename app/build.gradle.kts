@@ -61,6 +61,9 @@ dependencies {
     // Google Fonts
     implementation("androidx.compose.ui:ui-text-google-fonts:1.6.1")
     implementation(libs.androidx.ui.text.google.fonts)
+    
+    // Splash Screen
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

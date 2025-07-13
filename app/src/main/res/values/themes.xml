@@ -6,4 +6,12 @@
     </style>
 
     <style name="Theme.PlayFriends" parent="Base.Theme.PlayFriends" />
+    
+    <!-- 스플래시 화면 테마 -->
+    <style name="Theme.PlayFriends.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.PlayFriends</item>
+    </style>
 </resources>

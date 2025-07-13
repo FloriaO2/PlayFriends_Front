@@ -8,6 +8,7 @@ import com.example.playfriends.UI.screen.HomeScreen
 import com.example.playfriends.UI.screen.LoginScreen
 import com.example.playfriends.UI.screen.GroupScreen
 import com.example.playfriends.UI.screen.ProfileScreen
+import com.example.playfriends.UI.screen.GroupPlanScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -23,6 +24,9 @@ fun NavGraph(navController: NavHostController) {
         }
         composable("group") {
             GroupScreen(navController = navController)
+        }
+        composable("groupPlan") {
+            GroupPlanScreen(navController = navController)
         }
         composable("profile") {
             ProfileScreen(navController = navController)
