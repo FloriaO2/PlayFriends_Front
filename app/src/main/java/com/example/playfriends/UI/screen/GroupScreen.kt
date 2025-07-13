@@ -1,49 +1,264 @@
 package com.example.playfriends.UI.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.playfriends.UI.component.AppTopBar
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.playfriends.UI.component.AppTopBar
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 
 @Composable
 fun GroupScreen(navController: NavController) {
     val backgroundColor = Color(0xFFF1FFF4)
-    
+    val cardColor = Color(0xFFFAFFFA)
+    val titleColor = Color(0xFF228B22)
+    val checkboxColor = Color(0xFF7E57C2)
+
     Scaffold(
-        containerColor = backgroundColor,
         topBar = {
             AppTopBar(
                 onLogoClick = { navController.navigate("home") },
-                onProfileClick = { navController.navigate("profile") }
+                onProfileClick = { navController.navigate("profile") },
+                profileInitial = "A"
             )
-        }
-    ) { innerPadding ->
+        },
+        containerColor = backgroundColor
+    ) { padding ->
         Column(
             modifier = Modifier
+                .padding(padding)
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
         ) {
-            Text(
-                text = "그룹 화면",
-                style = MaterialTheme.typography.headlineMedium
-            )
-            
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Button(
-                onClick = { navController.navigateUp() }
+
+            // 그룹명 + 시간/위치
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal=20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("뒤로 가기")
+                Text("그룹 1", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("25/06/20 14:30 - 22:00", fontSize = 14.sp, color = Color.Black)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Person, contentDescription = "location", modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("강남", fontSize = 14.sp)
+                    }
+                }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 참여자 카드
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = cardColor),
+                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // 그룹 생성자
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Person, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("그룹 생성자 이름", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // 참여자들 (2열로 표시)
+                    val participants = listOf(
+                        "참여자 1", "참여자 2", "참여자 3", "참여자 4", "참여자 5",
+                        "참여자 6", "참여자 7", "참여자 8", "참여자 9", "참여자 10"
+                    )
+                    
+                    participants.chunked(2).forEach { rowMembers ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            rowMembers.forEach { member ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(Icons.Default.Person, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(member, fontSize = 16.sp)
+                                }
+                            }
+                            // 홀수 개일 때 두 번째 열을 빈 공간으로 채움
+                            if (rowMembers.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 취향 분석 레포트 타이틀
+            Text(
+                buildAnnotatedString {
+                    withStyle(style = SpanStyle(color = titleColor, fontWeight = FontWeight.Bold)) {
+                        append("그룹 1")
+                    }
+                    append("을 위한 취향 분석 레포트")
+                },
+                fontSize = 18.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 육각형 placeholder
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .size(200.dp)
+            ) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val hexPath = Path()
+                    val radius = size.minDimension / 2f * 0.9f
+                    val centerX = size.width / 2f
+                    val centerY = size.height / 2f
+                    for (i in 0..5) {
+                        val angle = Math.toRadians((60.0 * i - 30.0))
+                        val x = centerX + radius * Math.cos(angle).toFloat()
+                        val y = centerY + radius * Math.sin(angle).toFloat()
+                        if (i == 0) {
+                            hexPath.moveTo(x, y)
+                        } else {
+                            hexPath.lineTo(x, y)
+                        }
+                    }
+                    hexPath.close()
+                    drawPath(
+                        path = hexPath,
+                        color = Color(0xFFD1E9D1),
+                        style = Fill
+                    )
+                    drawPath(
+                        path = hexPath,
+                        color = Color(0xFFB0EACD),
+                        style = Stroke(width = 6f)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // 놀이 콘텐츠 추천 카드
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = cardColor),
+                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "⭐ 놀이 콘텐츠 추천 ⭐",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val options = listOf("놀이공원", "공방", "팝업", "방탈출 카페")
+                    var checkedStates by remember { mutableStateOf(List(options.size) { false }) }
+                    
+                    options.forEachIndexed { index, option ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = checkedStates[index],
+                                onCheckedChange = { isChecked ->
+                                    checkedStates = checkedStates.toMutableList().apply {
+                                        this[index] = isChecked
+                                    }
+                                },
+                                colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
+                            )
+                            Text(option, fontSize = 16.sp)
+                        }
+                        if (index < options.size - 1) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = { },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9CCC65)),
+                        shape = RoundedCornerShape(50),
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Edit")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // 하단 버튼
+            Button(
+                onClick = { },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
+                shape = RoundedCornerShape(32.dp)
+            ) {
+                Text("상세 계획 추천 받으러 가기", color = Color.White, fontSize = 16.sp)
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
-

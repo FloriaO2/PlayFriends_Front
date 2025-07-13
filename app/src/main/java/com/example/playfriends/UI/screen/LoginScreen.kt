@@ -30,6 +30,7 @@ fun LoginScreen(navController: NavController) {
     var isSignUp by remember { mutableStateOf(false) }
     var step by remember { mutableStateOf(1) }
 
+    var userNickname by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordConfirm by remember { mutableStateOf("") }
@@ -208,12 +209,49 @@ fun LoginScreen(navController: NavController) {
 
             if (step == 1) {
                 OutlinedTextField(
+                    value = userNickname,
+                    onValueChange = { userNickname = it },
+                    placeholder = { Text("닉네임", color = Color.Gray) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        unfocusedBorderColor = borderColor,
+                        focusedBorderColor = borderColor,
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
                     value = userId,
                     onValueChange = { userId = it },
                     placeholder = { Text("아이디", color = Color.Gray) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        unfocusedBorderColor = borderColor,
+                        focusedBorderColor = borderColor,
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = { Text("비밀번호", color = Color.Gray) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    visualTransformation = PasswordVisualTransformation(),
                     colors = TextFieldDefaults.outlinedTextFieldColors(
                         unfocusedBorderColor = borderColor,
                         focusedBorderColor = borderColor,
@@ -235,60 +273,7 @@ fun LoginScreen(navController: NavController) {
                     colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("다음", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = { Text("비밀번호", color = Color.Gray) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    visualTransformation = PasswordVisualTransformation(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        unfocusedBorderColor = borderColor,
-                        focusedBorderColor = borderColor,
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedTextField(
-                    value = passwordConfirm,
-                    onValueChange = { passwordConfirm = it },
-                    placeholder = { Text("비밀번호 확인", color = Color.Gray) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    visualTransformation = PasswordVisualTransformation(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        unfocusedBorderColor = borderColor,
-                        focusedBorderColor = borderColor,
-                        containerColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = {
-                        if (password == passwordConfirm && password.isNotBlank()) {
-                            navController.navigate("home")
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text("다음", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("회원가입", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
                 }

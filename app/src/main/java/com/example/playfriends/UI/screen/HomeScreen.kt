@@ -27,7 +27,7 @@ import androidx.navigation.NavController
 import com.example.playfriends.UI.component.GroupCard
 import com.example.playfriends.UI.component.GroupCardHeader
 import com.example.playfriends.UI.component.AppTopBar
-import com.example.playfriends.UI.component.ScheduleItem
+import com.example.playfriends.UI.component.ScheduleTimeline
 
 @Composable
 fun HomeScreen(navController: NavController) {
@@ -144,6 +144,12 @@ fun HomeScreen(navController: NavController) {
                     onToggle = { 
                         expandedGroupId = if (expandedGroupId == group.id) null else group.id
                     },
+                    onGroupClick = { 
+                        // 상세정보가 열린 상태에서 한 번 더 클릭하면 GroupScreen으로 이동
+                        if (expandedGroupId == group.id) {
+                            navController.navigate("group")
+                        }
+                    },
                     cardBackground = cardBackground,
                     titleColor = titleColor,
                     chipColor = chipColor,
@@ -172,6 +178,7 @@ fun AccordionGroupCard(
     group: GroupData,
     isExpanded: Boolean,
     onToggle: () -> Unit,
+    onGroupClick: () -> Unit,
     cardBackground: Color,
     titleColor: Color,
     chipColor: Color,
@@ -182,7 +189,13 @@ fun AccordionGroupCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
-            .clickable { onToggle() },
+            .clickable { 
+                if (isExpanded) {
+                    onGroupClick()
+                } else {
+                    onToggle()
+                }
+            },
         colors = CardDefaults.cardColors(containerColor = cardBackground),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -200,17 +213,13 @@ fun AccordionGroupCard(
             // 상세 정보 (확장 시에만 표시)
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(16.dp))
-                group.activities.forEachIndexed { index, activity ->
-                    ScheduleItem(
-                        time = activity.first,
-                        label = activity.second,
-                        icon = activity.third,
-                        moveTime = if (index < group.moves.size) group.moves[index] else null,
-                        moveColor = if (index % 2 == 0) moveWalkColor else moveSubwayColor,
-                        moveIcon = if (index % 2 == 0) "🚶" else "🚇",
-                        chipColor = chipColor
-                    )
-                }
+                ScheduleTimeline(
+                    activities = group.activities,
+                    moves = group.moves,
+                    moveColors = List(group.moves.size) { if (it % 2 == 0) moveWalkColor else moveSubwayColor },
+                    moveIcons = List(group.moves.size) { if (it % 2 == 0) "🚶" else "🚇" },
+                    chipColor = chipColor
+                )
             }
         }
     }
