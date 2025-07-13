@@ -265,7 +265,10 @@ fun LoginScreen(navController: NavController) {
 
                 Button(
                     onClick = {
-                        if (userId.isNotBlank()) step = 2
+                        if (userId.isNotBlank()) {
+                            // TestScreen으로 이동
+                            navController.navigate("test")
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()

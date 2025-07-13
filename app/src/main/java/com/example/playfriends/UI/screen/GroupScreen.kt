@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
@@ -12,6 +14,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -90,19 +94,23 @@ fun GroupScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 그룹명 + 시간/위치
+            // 그룹명 + 그룹코드 + 시간/위치
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .padding(horizontal=20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("그룹 1", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text("그룹 1", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                    Text("GROUP_1234", fontSize = 12.sp, color = Color.Gray)
+                }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("25/06/20 14:30 - 22:00", fontSize = 14.sp, color = Color.Black)
+                    Text("25/06/20 14:30 - 22:00", fontSize = 16.sp, color = Color.Black)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, contentDescription = "location", modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("강남", fontSize = 14.sp)
+                        Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("강남", fontSize = 16.sp)
                     }
                 }
             }
@@ -117,11 +125,27 @@ fun GroupScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // 그룹 생성자
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("그룹 생성자 이름", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    // 그룹 생성자와 나가기 버튼
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Person, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("그룹 생성자 이름", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                        IconButton(
+                            onClick = { /* TODO: 그룹 나가기 로직 */ }
+                        ) {
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "나가기",
+                                tint = Color(0xFF942020),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(16.dp))
@@ -157,7 +181,7 @@ fun GroupScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(30.dp))
 
             // 가로줄
             Box(
@@ -167,7 +191,7 @@ fun GroupScreen(navController: NavController) {
                     .background(Color(0xFFE0E0E0))
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
 
             // 취향 분석 레포트 타이틀
@@ -182,7 +206,7 @@ fun GroupScreen(navController: NavController) {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
             // 육각형 placeholder
             Box(
@@ -351,26 +375,31 @@ fun GroupScreen(navController: NavController) {
                     )
                 },
                 text = {
-                    Column {
-                        additionalContents.forEach { content ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                            ) {
-                                Checkbox(
-                                    checked = tempSelectedContents.contains(content),
-                                    onCheckedChange = { isChecked ->
-                                        tempSelectedContents = if (isChecked) {
-                                            tempSelectedContents.toMutableList().apply { add(content) }
-                                        } else {
-                                            tempSelectedContents.toMutableList().apply { remove(content) }
-                                        }
-                                    },
-                                    colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
-                                )
-                                Text(content, fontSize = 16.sp)
+                    Box(
+                        modifier = Modifier
+                            .heightIn(max = 300.dp)
+                    ) {
+                        LazyColumn {
+                            items(additionalContents) { content ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                ) {
+                                    Checkbox(
+                                        checked = tempSelectedContents.contains(content),
+                                        onCheckedChange = { isChecked ->
+                                            tempSelectedContents = if (isChecked) {
+                                                tempSelectedContents.toMutableList().apply { add(content) }
+                                            } else {
+                                                tempSelectedContents.toMutableList().apply { remove(content) }
+                                            }
+                                        },
+                                        colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
+                                    )
+                                    Text(content, fontSize = 16.sp)
+                                }
                             }
                         }
                     }

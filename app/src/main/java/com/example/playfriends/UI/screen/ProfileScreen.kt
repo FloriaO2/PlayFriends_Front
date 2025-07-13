@@ -106,7 +106,7 @@ fun ProfileScreen(navController: NavController) {
 
             // Edit Profile 버튼
             Button(
-                onClick = {},
+                onClick = { navController.navigate("test") },
                 shape = RoundedCornerShape(50),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
                 modifier = Modifier

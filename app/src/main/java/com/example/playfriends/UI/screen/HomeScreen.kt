@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Info
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,10 +36,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import com.example.playfriends.UI.component.GroupCard
 import com.example.playfriends.UI.component.GroupCardHeader
 import com.example.playfriends.UI.component.AppTopBar
 import com.example.playfriends.UI.component.ScheduleTimeline
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.playfriends.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -223,7 +230,7 @@ fun HomeScreen(navController: NavController) {
         if (showCreateGroupDialog) {
             var tempGroupName by remember { mutableStateOf("") }
             
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { showCreateGroupDialog = false },
                 title = {
                     Text(
@@ -281,7 +288,10 @@ fun HomeScreen(navController: NavController) {
         
         // 그룹 생성 완료 팝업
         if (showGroupCreatedDialog) {
-            androidx.compose.material3.AlertDialog(
+            val clipboardManager = LocalClipboardManager.current
+            var showCopiedMessage by remember { mutableStateOf(false) }
+            
+            AlertDialog(
                 onDismissRequest = { showGroupCreatedDialog = false },
                 title = {
                     Text(
@@ -292,17 +302,34 @@ fun HomeScreen(navController: NavController) {
                 },
                 text = {
                     Column {
-                        Text(
-                            text = groupId,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4C6A57),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = groupId,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4C6A57),
+                                modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(groupId))
+                                }
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.copy),
+                                    contentDescription = "복사",
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
                         Text(
                             "Join Group 버튼을 누르고 이 초대코드를 입력하면 그룹에 참여할 수 있습니다.",
                             fontSize = 14.sp,
-                            color = Color.Gray
+                            color = Color.Gray,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
                 },
@@ -321,7 +348,7 @@ fun HomeScreen(navController: NavController) {
         if (showJoinGroupDialog) {
             var inviteCode by remember { mutableStateOf("") }
             
-            androidx.compose.material3.AlertDialog(
+            AlertDialog(
                 onDismissRequest = { showJoinGroupDialog = false },
                 title = {
                     Text(

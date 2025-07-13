@@ -10,15 +10,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,19 +72,23 @@ fun GroupPlanScreen(navController: NavController) {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 그룹명 + 시간/위치
+            // 그룹명 + 그룹코드 + 시간/위치
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .padding(horizontal=20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("그룹 1", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                Column(horizontalAlignment = Alignment.Start) {
+                    Text("그룹 1", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                    Text("GROUP_1234", fontSize = 12.sp, color = Color.Gray)
+                }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("25/06/20 14:30 - 22:00", fontSize = 14.sp, color = Color.Black)
+                    Text("25/06/20 14:30 - 22:00", fontSize = 16.sp, color = Color.Black)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, contentDescription = "location", modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("강남", fontSize = 14.sp)
+                        Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("강남", fontSize = 16.sp)
                     }
                 }
             }
@@ -105,11 +103,27 @@ fun GroupPlanScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    // 그룹 생성자
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Person, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("그룹 생성자 이름", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    // 그룹 생성자와 나가기 버튼
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Person, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("그룹 생성자 이름", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                        IconButton(
+                            onClick = { /* TODO: 그룹 나가기 로직 */ }
+                        ) {
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "나가기",
+                                tint = Color(0xFF942020),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -162,7 +176,8 @@ fun GroupPlanScreen(navController: NavController) {
                 columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.heightIn(max = 2000.dp)
+                modifier = Modifier.heightIn(max = 1500.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
             ) {
                 items(plans) { title ->
                     PlanCard(
@@ -176,7 +191,7 @@ fun GroupPlanScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
@@ -200,36 +215,54 @@ fun PlanCard(
             .fillMaxWidth()
             .padding(top = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(planTitle, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF228B22))
+        Column(modifier = Modifier.padding(0.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0x728ACB97))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    planTitle, 
+                    fontWeight = FontWeight.Bold, 
+                    fontSize = 22.sp, 
+                    color = Color(0xA6215421),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // 세로 배치 타임라인
-            VerticalScheduleTimeline(
-                timeline = timeline,
-                chipColor = chipColor,
-                moveWalkColor = moveWalkColor,
-                moveSubwayColor = moveSubwayColor
-            )
+            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                VerticalScheduleTimeline(
+                    timeline = timeline,
+                    chipColor = chipColor,
+                    moveWalkColor = moveWalkColor,
+                    moveSubwayColor = moveSubwayColor
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Button(
-                onClick = { 
-                    // TODO: 여기에 확정하기 관련 로직 추가
-                    // 예: 계획 확정 처리, 데이터베이스 저장 등
-                    
-                    // GroupScreen으로 돌아가기
-                    navController.navigate("group") {
-                        popUpTo("groupPlan") { inclusive = true }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
-                shape = RoundedCornerShape(30.dp)
-            ) {
-                Text("확정하기", color = Color.White)
+            Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+                Button(
+                    onClick = { 
+                        // TODO: 여기에 확정하기 관련 로직 추가
+                        // 예: 계획 확정 처리, 데이터베이스 저장 등
+                        
+                        // GroupScreen으로 돌아가기
+                        navController.navigate("group") {
+                            popUpTo("groupPlan") { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
+                    shape = RoundedCornerShape(30.dp)
+                ) {
+                    Text("확정하기", color = Color.White)
+                }
             }
         }
     }
@@ -276,7 +309,6 @@ fun VerticalScheduleTimeline(
             modifier = Modifier
                 .width(timelineWidthTotal)
                 .height(totalRows * rowHeight)
-                .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(8.dp))
         ) {
             // 수직선
             if (dotCenters.isNotEmpty()) {
