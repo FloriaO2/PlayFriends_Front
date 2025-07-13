@@ -108,7 +108,7 @@ fun ProfileScreen(navController: NavController) {
                         modifier = Modifier.clickable { /* TODO: 회원 탈퇴 로직 */ }
                     ) {
                         Text(
-                            "회원 탈퇴",
+                            "로그아웃",
                             color = Color(0xFF8B0000),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
