@@ -60,6 +60,7 @@ class GroupViewModel : ViewModel() {
                 onSuccess = { group ->
                     // 새로 생성된 그룹을 목록에 추가
                     _groups.value = _groups.value + group
+                    _selectedGroup.value = group // <- 반드시 할당!
                     _groupOperationState.value = GroupOperationState.Success("그룹이 생성되었습니다")
                 },
                 onFailure = { exception ->
