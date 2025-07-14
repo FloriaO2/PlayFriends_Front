@@ -17,6 +17,13 @@ import com.example.playfriends.ui.theme.PlayFriendsTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 무조건 한국어로 Locale 설정
+        val config = resources.configuration
+        val locale = java.util.Locale.KOREA
+        java.util.Locale.setDefault(locale)
+        config.setLocale(locale)
+        resources.updateConfiguration(config, resources.displayMetrics)
+
         super.onCreate(savedInstanceState)
         
         // TokenManager 초기화
