@@ -25,6 +25,17 @@ class UserViewModel : ViewModel() {
     private val _userGroups = MutableStateFlow<List<GroupResponse>>(emptyList())
     val userGroups: StateFlow<List<GroupResponse>> = _userGroups.asStateFlow()
     
+    // 그룹 참여 상태
+    private val _joinGroupState = MutableStateFlow<JoinGroupState>(JoinGroupState.Idle)
+    val joinGroupState: StateFlow<JoinGroupState> = _joinGroupState.asStateFlow()
+
+    sealed class JoinGroupState {
+        object Idle : JoinGroupState()
+        object Loading : JoinGroupState()
+        data class Success(val message: String) : JoinGroupState()
+        data class Error(val message: String) : JoinGroupState()
+    }
+    
     // 로그인 상태
     sealed class LoginState {
         object Idle : LoginState()
@@ -106,14 +117,16 @@ class UserViewModel : ViewModel() {
     // 현재 사용자 정보 조회
     fun getCurrentUser() {
         viewModelScope.launch {
+            Log.d("UserViewModel", "getCurrentUser() 호출")
             val result = userRepository.getCurrentUser()
             result.fold(
                 onSuccess = { user ->
+                    Log.d("UserViewModel", "getCurrentUser() 성공: $user")
                     _user.value = user
                 },
                 onFailure = { exception ->
-                    // 사용자 정보 조회 실패 시 로그인 상태 초기화
-                    _loginState.value = LoginState.Error(exception.message ?: "사용자 정보 조회 실패")
+                    Log.d("UserViewModel", "getCurrentUser() 실패: ${exception.message}")
+                    _user.value = null
                 }
             )
         }
@@ -135,6 +148,27 @@ class UserViewModel : ViewModel() {
         }
     }
     
+    // 그룹 참여
+    fun joinGroup(groupId: String) {
+        viewModelScope.launch {
+            _joinGroupState.value = JoinGroupState.Loading
+            val result = userRepository.joinGroup(groupId)
+            result.fold(
+                onSuccess = { message ->
+                    _joinGroupState.value = JoinGroupState.Success(message)
+                },
+                onFailure = { exception ->
+                    _joinGroupState.value = JoinGroupState.Error(exception.message ?: "그룹 참여 실패")
+                }
+            )
+        }
+    }
+
+    // 그룹 참여 상태 초기화
+    fun resetJoinGroupState() {
+        _joinGroupState.value = JoinGroupState.Idle
+    }
+    
     // 로그인 상태 초기화
     fun resetLoginState() {
         _loginState.value = LoginState.Idle
@@ -143,5 +177,15 @@ class UserViewModel : ViewModel() {
     // 에러 메시지 설정
     fun setError(message: String) {
         _loginState.value = LoginState.Error(message)
+    }
+
+    fun getUserById(userId: String, onResult: (User?) -> Unit) {
+        viewModelScope.launch {
+            val result = userRepository.getUserById(userId)
+            result.fold(
+                onSuccess = { user -> onResult(user) },
+                onFailure = { onResult(null) }
+            )
+        }
     }
 } 

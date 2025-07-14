@@ -13,7 +13,10 @@ data class ErrorResponse(
     val error: String? = null,
     
     @SerializedName("errors")
-    val errors: List<FieldError>? = null
+    val errors: List<FieldError>? = null,
+
+    @SerializedName("group_status")
+    val groupStatus: String? = null
 )
 
 data class FieldError(

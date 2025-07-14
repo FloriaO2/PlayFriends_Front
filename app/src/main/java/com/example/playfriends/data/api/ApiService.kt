@@ -28,6 +28,10 @@ interface ApiService {
     @GET("api/v1/users/{user_id}/groups")
     suspend fun getUserGroups(@Path("user_id") userId: String): Response<GroupList>
     
+    // 특정 사용자 정보 조회
+    @GET("api/v1/users/{user_id}")
+    suspend fun getUserById(@Path("user_id") userId: String): Response<User>
+    
     // ===== 그룹 관련 API =====
     
     // 모든 그룹 조회

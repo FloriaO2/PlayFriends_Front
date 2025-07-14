@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import android.util.Log
 
 class UserRepository {
     private val apiService = RetrofitClient.apiService
@@ -170,6 +171,47 @@ class UserRepository {
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    // 그룹 참여
+    suspend fun joinGroup(groupId: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.joinGroup(groupId)
+            val errorBodyStr = response.errorBody()?.string() ?: ""
+            Log.d("JoinGroup", "code=${response.code()}, body=${response.body()}, error=$errorBodyStr")
+            if (response.isSuccessful) {
+                val groupInfo = apiService.getGroup(groupId)
+                val groupName = groupInfo.body()?.groupname ?: "그룹"
+                val message = "$groupName 그룹에 참여했습니다."
+                Log.d("JoinGroup", "성공 메시지: $message")
+                Result.success(message)
+            } else {
+                val errorMsg = when {
+                    response.code() == 404 -> "존재하지 않는 그룹입니다."
+                    response.code() == 400 -> "이미 참여 중인 그룹입니다."
+                    response.code() == 500 && errorBodyStr.contains("not found", ignoreCase = true) -> "존재하지 않는 그룹입니다."
+                    response.code() == 500 -> "존재하지 않는 그룹입니다."
+                    else -> "그룹 참여에 실패했습니다."
+                }
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("그룹 참여 중 오류가 발생했습니다: ${e.message}"))
+        }
+    }
+
+    suspend fun getUserById(userId: String): Result<User> = withContext(Dispatchers.IO) {
+        val response = apiService.getUserById(userId)
+        if (response.isSuccessful) {
+            val user = response.body()
+            if (user != null) {
+                Result.success(user)
+            } else {
+                Result.failure(Exception("사용자 정보가 없습니다."))
+            }
+        } else {
+            Result.failure(Exception(response.errorBody()?.string() ?: "사용자 정보 조회 실패"))
         }
     }
 } 

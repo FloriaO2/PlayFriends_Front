@@ -64,7 +64,7 @@ fun GroupCardHeader(
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = time,
-                fontSize = 14.sp,
+                fontSize = 13.5.sp,
                 color = Color.Gray,
                 maxLines = 1
             )

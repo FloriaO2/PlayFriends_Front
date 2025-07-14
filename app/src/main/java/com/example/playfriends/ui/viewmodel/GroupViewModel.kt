@@ -22,6 +22,9 @@ class GroupViewModel : ViewModel() {
     private val _groupOperationState = MutableStateFlow<GroupOperationState>(GroupOperationState.Idle)
     val groupOperationState: StateFlow<GroupOperationState> = _groupOperationState.asStateFlow()
     
+    private val _groupDetail = MutableStateFlow<GroupResponse?>(null)
+    val groupDetail: StateFlow<GroupResponse?> = _groupDetail.asStateFlow()
+
     // 그룹 작업 상태
     sealed class GroupOperationState {
         object Idle : GroupOperationState()
@@ -84,6 +87,16 @@ class GroupViewModel : ViewModel() {
                 onFailure = { exception ->
                     _groupOperationState.value = GroupOperationState.Error(exception.message ?: "그룹 조회 실패")
                 }
+            )
+        }
+    }
+
+    fun getGroupDetail(groupId: String) {
+        viewModelScope.launch {
+            val result = groupRepository.getGroup(groupId)
+            result.fold(
+                onSuccess = { group -> _groupDetail.value = group },
+                onFailure = { _groupDetail.value = null }
             )
         }
     }

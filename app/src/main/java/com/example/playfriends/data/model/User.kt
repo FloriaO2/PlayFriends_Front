@@ -36,9 +36,4 @@ data class LoginRequest(
 data class Token(
     val access_token: String,
     val token_type: String
-)
-
-// 메시지 응답 모델
-data class Message(
-    val message: String
 ) 

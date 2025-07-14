@@ -65,7 +65,20 @@ import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.delay
 import android.app.DatePickerDialog
 import java.util.Calendar
+import com.example.playfriends.ui.viewmodel.UserViewModel
+import android.util.Log
+import androidx.activity.ComponentActivity
+import android.app.Activity
+import android.content.Context
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.material3.AlertDialog
 
+// Context에서 Activity를 안전하게 얻는 확장 함수
+fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is android.content.ContextWrapper -> baseContext.findActivity()
+    else -> null
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +87,8 @@ fun HomeScreen(
     onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val activity = context.findActivity() as? ComponentActivity
+    requireNotNull(activity) { "Activity를 찾을 수 없습니다." }
     val fabExpanded = remember { mutableStateOf(false) }
     val backgroundColor = Color(0xFFF1FFF4)
     val cardBackground = Color(0xFFFAFFFA)
@@ -94,10 +109,81 @@ fun HomeScreen(
     var showInputErrorDialog by remember { mutableStateOf(false) }
     var popupInputError by remember { mutableStateOf<String?>(null) }
 
+    // 멤버 다이얼로그 상태
+    var showMemberDialog by remember { mutableStateOf(false) }
+    var memberNames by remember { mutableStateOf(listOf<String>()) }
+    var memberDialogLoading by remember { mutableStateOf(false) }
+
     val groupViewModel: GroupViewModel = viewModel()
     val groupOperationState by groupViewModel.groupOperationState.collectAsState()
     val selectedGroup by groupViewModel.selectedGroup.collectAsState()
     var createdGroupId by remember { mutableStateOf("") }
+
+    // 추가: UserViewModel 선언 및 상태 수집
+    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
+    val user by userViewModel.user.collectAsState()
+    val userGroups by userViewModel.userGroups.collectAsState()
+
+    // user 값 로그
+    LaunchedEffect(user) {
+        Log.d("HomeScreen", "user: $user")
+        user?.let {
+            Log.d("HomeScreen", "getUserGroups 호출: ${it.userid}")
+            userViewModel.getUserGroups(it.userid)
+        }
+    }
+
+    // userGroups 값 로그
+    LaunchedEffect(userGroups) {
+        Log.d("HomeScreen", "userGroups size: ${userGroups.size}")
+        userGroups.forEach { Log.d("HomeScreen", "group: ${it.groupname}, id: ${it._id}") }
+    }
+
+    // user가 null이면 getCurrentUser() 호출
+    LaunchedEffect(Unit) {
+        if (user == null) {
+            Log.d("HomeScreen", "user가 null이라 getCurrentUser() 호출")
+            userViewModel.getCurrentUser()
+        }
+    }
+
+    // user가 null이면 로딩 UI만 보여주고 return
+    //if (user == null) {
+    //    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    //        CircularProgressIndicator()
+    //    }
+    //    return
+    //}
+
+    // userGroups를 GroupData 리스트로 변환
+    val groups = userGroups.map { group ->
+        // 서버에서 오는 날짜 포맷에 맞게 파싱
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
+        val start = try {
+            outputFormat.format(inputFormat.parse(group.starttime) ?: "")
+        } catch (e: Exception) { "" }
+        val end = try {
+            group.endtime?.let {
+                outputFormat.format(inputFormat.parse(it) ?: "")
+            } ?: ""
+        } catch (e: Exception) { "" }
+        val timeStr = if (end.isNotBlank()) "$start - $end" else start
+        Log.d("HomeScreen", "group: ${group.groupname}, start: $start, end: $end, time: $timeStr, rawStart: ${group.starttime}, rawEnd: ${group.endtime}")
+        GroupData(
+            id = group._id,
+            name = group.groupname,
+            time = timeStr,
+            location = "대전",
+            activities = listOf(
+                Triple("14:30 - 15:30", "운동", "🏀"),
+                Triple("15:40 - 16:40", "카페", "☕"),
+                Triple("16:50 - 19:30", "공연", "🎵"),
+                Triple("19:40 - 22:00", "쇼핑", "🛒")
+            ),
+            moves = listOf("7분", "3분", "10분")
+        )
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -190,56 +276,6 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // 그룹 데이터 정의
-            val groups = listOf(
-                GroupData(
-                    id = "group1",
-                    name = "그룹 1",
-                    time = "25/06/20 14:30 - 22:00",
-                    location = "강남",
-                    activities = listOf(
-                        Triple("14:30 - 15:30", "운동", "🏀"),
-                        Triple("15:40 - 16:40", "카페", "☕"),
-                        Triple("16:50 - 19:30", "공연", "🎵"),
-                        Triple("19:40 - 22:00", "쇼핑", "🛒")
-                    ),
-                    moves = listOf("7분", "3분", "10분")
-                ),
-                GroupData(
-                    id = "group2",
-                    name = "그룹 2",
-                    time = "25/06/27 12:30 - 16:00",
-                    location = "홍대",
-                    activities = listOf(
-                        Triple("12:30 - 14:00", "점심", "🍜"),
-                        Triple("14:10 - 16:00", "카페", "☕")
-                    ),
-                    moves = listOf("5분")
-                ),
-                GroupData(
-                    id = "group3",
-                    name = "그룹 3",
-                    time = "25/06/28 12:30 - 16:00",
-                    location = "명동",
-                    activities = listOf(
-                        Triple("12:30 - 14:00", "점심", "🍜"),
-                        Triple("14:10 - 16:00", "쇼핑", "🛒")
-                    ),
-                    moves = listOf("8분")
-                ),
-                GroupData(
-                    id = "group4",
-                    name = "그룹 4",
-                    time = "25/06/30 16:30 - 23:40",
-                    location = "강남",
-                    activities = listOf(
-                        Triple("16:30 - 18:00", "운동", "🏃"),
-                        Triple("18:10 - 20:00", "저녁", "🍖"),
-                        Triple("20:10 - 23:40", "노래방", "🎤")
-                    ),
-                    moves = listOf("10분", "15분")
-                )
-            )
-
             // 그룹 카드들 렌더링
             groups.forEach { group ->
                 AccordionGroupCard(
@@ -258,7 +294,14 @@ fun HomeScreen(
                     titleColor = titleColor,
                     chipColor = chipColor,
                     moveWalkColor = moveWalkColor,
-                    moveSubwayColor = moveSubwayColor
+                    moveSubwayColor = moveSubwayColor,
+                    // 멤버 아이콘 클릭 핸들러 추가
+                    onMemberClick = {
+                        memberDialogLoading = true
+                        showMemberDialog = true
+                        memberNames = listOf()
+                        groupViewModel.getGroupDetail(group.id)
+                    }
                 )
             }
 
@@ -603,6 +646,34 @@ fun HomeScreen(
         // Join Group 팝업
         if (showJoinGroupDialog) {
             var inviteCode by remember { mutableStateOf("") }
+            val userViewModel: UserViewModel = viewModel()
+            val joinGroupState by userViewModel.joinGroupState.collectAsState()
+            var showJoinResultDialog by remember { mutableStateOf(false) }
+            var joinResultMessage by remember { mutableStateOf("") }
+
+            // 참여 결과 안내 다이얼로그
+            if (showJoinResultDialog) {
+                AlertDialog(
+                    onDismissRequest = {
+                        showJoinResultDialog = false
+                        userViewModel.resetJoinGroupState()
+                        if (joinGroupState is UserViewModel.JoinGroupState.Success) {
+                            navController.navigate("home")
+                        }
+                    },
+                    title = { Text("그룹 참여 결과", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                    text = { Text(joinResultMessage) },
+                    confirmButton = {
+                        Button(onClick = {
+                            showJoinResultDialog = false
+                            userViewModel.resetJoinGroupState()
+                            if (joinGroupState is UserViewModel.JoinGroupState.Success) {
+                                navController.navigate("home")
+                            }
+                        }) { Text("확인") }
+                    }
+                )
+            }
 
             AlertDialog(
                 onDismissRequest = { showJoinGroupDialog = false },
@@ -632,17 +703,22 @@ fun HomeScreen(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         )
+                        if (joinGroupState is UserViewModel.JoinGroupState.Loading) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        }
                     }
                 },
                 confirmButton = {
                     Button(
                         onClick = {
                             if (inviteCode.isNotBlank()) {
-                                // TODO: 그룹 참여 로직 구현
-                                showJoinGroupDialog = false
+                                Log.d("JoinGroup", "버튼 클릭됨, inviteCode=$inviteCode")
+                                userViewModel.joinGroup(inviteCode)
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57))
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57)),
+                        enabled = joinGroupState !is UserViewModel.JoinGroupState.Loading
                     ) {
                         Text("참여하기")
                     }
@@ -656,6 +732,22 @@ fun HomeScreen(
                     }
                 }
             )
+
+            // 참여 결과 상태 변화 감지
+            LaunchedEffect(joinGroupState) {
+                when (joinGroupState) {
+                    is UserViewModel.JoinGroupState.Success -> {
+                        joinResultMessage = (joinGroupState as UserViewModel.JoinGroupState.Success).message
+                        showJoinResultDialog = true
+                        showJoinGroupDialog = false
+                    }
+                    is UserViewModel.JoinGroupState.Error -> {
+                        joinResultMessage = (joinGroupState as UserViewModel.JoinGroupState.Error).message
+                        showJoinResultDialog = true
+                    }
+                    else -> {}
+                }
+            }
         }
         if (navigateToHome) {
             LaunchedEffect(Unit) {
@@ -663,6 +755,54 @@ fun HomeScreen(
                 navController.navigate("home")
                 navigateToHome = false
             }
+        }
+
+        // 그룹 상세 정보가 갱신되면 멤버 이름 리스트 비동기 수집
+        val groupDetail by groupViewModel.groupDetail.collectAsState()
+        LaunchedEffect(groupDetail) {
+            val detail = groupDetail
+            if (showMemberDialog && detail != null) {
+                val ids = detail.member_ids
+                val names = mutableListOf<String>()
+                memberDialogLoading = true
+                ids.forEach { id ->
+                    userViewModel.getUserById(id) { user ->
+                        user?.let { names.add(it.username) }
+                        if (names.size == ids.size) {
+                            memberNames = names
+                            memberDialogLoading = false
+                        }
+                    }
+                }
+                if (ids.isEmpty()) {
+                    memberNames = listOf("멤버 없음")
+                    memberDialogLoading = false
+                }
+            }
+        }
+
+        // 멤버 리스트 다이얼로그 UI
+        if (showMemberDialog) {
+            AlertDialog(
+                onDismissRequest = { showMemberDialog = false },
+                title = { Text("그룹 멤버 목록", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                text = {
+                    if (memberDialogLoading) {
+                        Text("불러오는 중...", fontSize = 14.sp)
+                    } else {
+                        Column {
+                            memberNames.forEach { name ->
+                                Text(name, fontSize = 16.sp)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showMemberDialog = false }) {
+                        Text("확인")
+                    }
+                }
+            )
         }
     }
 }
@@ -687,7 +827,9 @@ fun AccordionGroupCard(
     titleColor: Color,
     chipColor: Color,
     moveWalkColor: Color,
-    moveSubwayColor: Color
+    moveSubwayColor: Color,
+    // 멤버 아이콘 클릭 핸들러 추가
+    onMemberClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -712,7 +854,7 @@ fun AccordionGroupCard(
                 time = group.time,
                 location = group.location,
                 titleColor = titleColor,
-                onMemberClick = { /* 그룹 멤버 보기 다이얼로그 표시 */ }
+                onMemberClick = { /* 그룹 멤버 보기 다이얼로그 표시 */ onMemberClick() }
             )
             // 상세 정보 (확장 시에만 표시)
             if (isExpanded) {
