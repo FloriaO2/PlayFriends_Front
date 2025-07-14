@@ -1,4 +1,4 @@
-package com.example.playfriends.UI.component
+package com.example.playfriends.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 
 @Composable
 fun GroupCardHeader(

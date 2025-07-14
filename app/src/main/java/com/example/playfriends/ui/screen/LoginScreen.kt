@@ -1,7 +1,8 @@
-package com.example.playfriends.UI.screen
+package com.example.playfriends.ui.screen
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,12 +22,19 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.playfriends.R
+import com.example.playfriends.ui.viewmodel.UserViewModel
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    navController: NavController,
+    onLoginSuccess: () -> Unit = {},
+    userViewModel: UserViewModel = viewModel()
+) {
     var isSignUp by remember { mutableStateOf(false) }
     var step by remember { mutableStateOf(1) }
 
@@ -38,6 +46,7 @@ fun LoginScreen(navController: NavController) {
     val backgroundColor = Color(0xFFF1FFF4)
     val buttonColor = Color(0xFF5C9E5C)
     val borderColor = Color(0xFF8DB38C)
+    val errorColor = Color(0xFFE57373)
     
     // Black Han Sans 폰트 사용 (Google Fonts)
     val fontFamily = FontFamily(
@@ -47,6 +56,36 @@ fun LoginScreen(navController: NavController) {
             certificates = emptyList()
         ))
     )
+
+    // ViewModel 상태 관찰
+    val loginState by userViewModel.loginState.collectAsState()
+    val user by userViewModel.user.collectAsState()
+    
+    // 사용자 정보 변경 시 로그 출력
+    LaunchedEffect(user) {
+        user?.let {
+            Log.d("LoginScreen", "사용자 정보 업데이트: ${it.userid}, ${it.username}")
+        }
+    }
+
+    // 로그인 상태에 따른 처리
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is UserViewModel.LoginState.Success -> {
+                // 로그인 성공 시 콜백 호출
+                onLoginSuccess()
+            }
+            is UserViewModel.LoginState.SuccessMessage -> {
+                // 회원가입 성공 시 로그인 화면으로 돌아가기
+                isSignUp = false
+                userViewModel.resetLoginState()
+            }
+            is UserViewModel.LoginState.Error -> {
+                // 에러는 UI에서 표시하므로 여기서는 아무것도 하지 않음
+            }
+            else -> {}
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -95,6 +134,25 @@ fun LoginScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // 에러 메시지 표시
+            if (loginState is UserViewModel.LoginState.Error) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = errorColor.copy(alpha = 0.1f)),
+                    border = BorderStroke(1.dp, errorColor)
+                ) {
+                    Text(
+                        text = (loginState as UserViewModel.LoginState.Error).message,
+                        color = errorColor,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(12.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
             // 아이디
             OutlinedTextField(
                 value = userId,
@@ -136,16 +194,25 @@ fun LoginScreen(navController: NavController) {
 
             Button(
                 onClick = {
-                    // 로그인 처리
-                    navController.navigate("home")
+                    if (userId.isNotBlank() && password.isNotBlank()) {
+                        userViewModel.login(userId, password)
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(10.dp),
+                enabled = loginState !is UserViewModel.LoginState.Loading
             ) {
-                Text("로그인", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                if (loginState is UserViewModel.LoginState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Text("로그인", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -163,6 +230,8 @@ fun LoginScreen(navController: NavController) {
                         userId = ""
                         password = ""
                         passwordConfirm = ""
+                        // 에러 상태 초기화
+                        userViewModel.resetLoginState()
                     }
                 )
             }
@@ -184,6 +253,8 @@ fun LoginScreen(navController: NavController) {
                         modifier = Modifier
                             .clickable {
                                 isSignUp = false
+                                // 에러 상태 초기화
+                                userViewModel.resetLoginState()
                             }
                             .size(28.dp)
                     )
@@ -206,6 +277,25 @@ fun LoginScreen(navController: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(40.dp))
+
+                    // 회원가입 에러 메시지 표시
+                    if (loginState is UserViewModel.LoginState.Error) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            colors = CardDefaults.cardColors(containerColor = errorColor.copy(alpha = 0.1f)),
+                            border = BorderStroke(1.dp, errorColor)
+                        ) {
+                            Text(
+                                text = (loginState as UserViewModel.LoginState.Error).message,
+                                color = errorColor,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(12.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
 
             if (step == 1) {
                 OutlinedTextField(
@@ -265,18 +355,46 @@ fun LoginScreen(navController: NavController) {
 
                 Button(
                     onClick = {
-                        if (userId.isNotBlank()) {
-                            // TestScreen으로 이동
-                            navController.navigate("test")
+                        // 입력 검증
+                        when {
+                            userNickname.isBlank() -> {
+                                // 닉네임이 비어있으면 에러 메시지 표시
+                                userViewModel.setError("닉네임을 입력해주세요.")
+                            }
+                            userId.isBlank() -> {
+                                // 아이디가 비어있으면 에러 메시지 표시
+                                userViewModel.setError("아이디를 입력해주세요.")
+                            }
+                            userId.length < 3 -> {
+                                // 아이디가 3자 미만이면 에러 메시지 표시
+                                userViewModel.setError("아이디는 3자 이상으로 입력해주세요.")
+                            }
+                            password.length < 8 -> {
+                                // 비밀번호가 8자 미만이면 에러 메시지 표시
+                                userViewModel.setError("비밀번호는 8자 이상으로 입력해주세요.")
+                            }
+                            else -> {
+                                // 모든 검증 통과 시 회원가입 API 호출
+                                Log.d("LoginScreen", "회원가입 시도: $userId, $userNickname")
+                                userViewModel.createUser(userId, userNickname, password)
+                            }
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    enabled = loginState !is UserViewModel.LoginState.Loading
                 ) {
-                    Text("회원가입", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    if (loginState is UserViewModel.LoginState.Loading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text("회원가입", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
                 }

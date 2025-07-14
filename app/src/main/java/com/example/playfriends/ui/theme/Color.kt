@@ -1,4 +1,4 @@
-package com.example.playfriends.UI.theme
+package com.example.playfriends.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

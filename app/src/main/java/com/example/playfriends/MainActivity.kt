@@ -10,19 +10,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.systemBars
 import androidx.navigation.compose.rememberNavController
-import com.example.playfriends.UI.navigation.NavGraph
-import com.example.playfriends.UI.theme.PlayFriendsTheme
+import com.example.playfriends.data.api.TokenManager
+import com.example.playfriends.ui.navigation.NavGraph
+import com.example.playfriends.ui.theme.PlayFriendsTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // TokenManager 초기화
+        TokenManager.init(this)
         
         // 상태바와 네비게이션 바 숨기기
         WindowCompat.setDecorFitsSystemWindows(window, false)

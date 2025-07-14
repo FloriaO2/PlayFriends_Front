@@ -1,4 +1,4 @@
-package com.example.playfriends.UI.screen
+package com.example.playfriends.ui.screen
 
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -6,7 +6,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.TextButton
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -14,9 +13,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,14 +27,20 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.material3.CardDefaults
 import androidx.navigation.NavController
-import com.example.playfriends.UI.component.AppTopBar
+import com.example.playfriends.ui.component.AppTopBar
+import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    onLogout: () -> Unit = {}
+) {
     val bgColor = Color(0xFFF1FFF4)
     val tagColor = Color(0xFFECECEC)
+    
+
 
     Scaffold(
         topBar = {
@@ -48,6 +52,7 @@ fun ProfileScreen(navController: NavController) {
         },
         containerColor = bgColor
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .padding(padding)
@@ -105,7 +110,7 @@ fun ProfileScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Box(
-                        modifier = Modifier.clickable { /* TODO: 회원 탈퇴 로직 */ }
+                        modifier = Modifier.clickable { onLogout() }
                     ) {
                         Text(
                             "로그아웃",
@@ -114,6 +119,8 @@ fun ProfileScreen(navController: NavController) {
                             fontWeight = FontWeight.Bold
                         )
                     }
+                    
+
                 }
             }
 
@@ -150,8 +157,9 @@ fun ProfileScreen(navController: NavController) {
             // 육각형 placeholder
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
                     .size(240.dp)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val hexPath = Path()
@@ -214,7 +222,8 @@ fun ProfileScreen(navController: NavController) {
                         "⭐ 놀이 콘텐츠 추천 ⭐",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -238,5 +247,7 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
         }
+        
+
+        }
     }
-}

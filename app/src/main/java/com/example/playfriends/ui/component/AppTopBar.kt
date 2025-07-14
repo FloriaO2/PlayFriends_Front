@@ -1,7 +1,6 @@
-package com.example.playfriends.UI.component
+package com.example.playfriends.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
