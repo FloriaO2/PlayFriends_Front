@@ -21,6 +21,9 @@ class UserViewModel : ViewModel() {
     
     private val _user = MutableStateFlow<User?>(null)
     val user: StateFlow<User?> = _user.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
     private val _userGroups = MutableStateFlow<List<GroupResponse>>(emptyList())
     val userGroups: StateFlow<List<GroupResponse>> = _userGroups.asStateFlow()
@@ -117,16 +120,19 @@ class UserViewModel : ViewModel() {
     // 현재 사용자 정보 조회
     fun getCurrentUser() {
         viewModelScope.launch {
+            _isLoading.value = true
             Log.d("UserViewModel", "getCurrentUser() 호출")
             val result = userRepository.getCurrentUser()
             result.fold(
                 onSuccess = { user ->
                     Log.d("UserViewModel", "getCurrentUser() 성공: $user")
                     _user.value = user
+                    _isLoading.value = false
                 },
                 onFailure = { exception ->
                     Log.d("UserViewModel", "getCurrentUser() 실패: ${exception.message}")
                     _user.value = null
+                    _isLoading.value = false
                 }
             )
         }
@@ -188,4 +194,48 @@ class UserViewModel : ViewModel() {
             )
         }
     }
-} 
+
+    // 사용자 정보 수정
+    fun updateUserMe(username: String?, foodPreferences: FoodPreferences?, playPreferences: PlayPreferences?) {
+        viewModelScope.launch {
+            val userUpdate = UserUpdate(
+                username = username,
+                food_preferences = foodPreferences,
+                play_preferences = playPreferences
+            )
+            val result = userRepository.updateUserMe(userUpdate)
+            result.fold(
+                onSuccess = { updatedUser ->
+                    _user.value = updatedUser
+                    Log.d("UserViewModel", "사용자 정보 업데이트 성공: $updatedUser")
+                },
+                onFailure = { exception ->
+                    Log.e("UserViewModel", "사용자 정보 업데이트 실패: ${exception.message}")
+                    // 에러 상태 처리 필요
+                }
+            )
+        }
+    }
+
+    // 선호도 수정
+    fun updatePreferences(foodPreferences: FoodPreferences, playPreferences: PlayPreferences) {
+        viewModelScope.launch {
+            val preferencesUpdate = PreferencesUpdate(
+                food_preferences = foodPreferences,
+                play_preferences = playPreferences
+            )
+            val result = userRepository.updatePreferences(preferencesUpdate)
+            result.fold(
+                onSuccess = {
+                    // 성공 시 사용자 정보 다시 로드하여 UI 갱신
+                    getCurrentUser()
+                    Log.d("UserViewModel", "선호도 업데이트 성공")
+                },
+                onFailure = { exception ->
+                    Log.e("UserViewModel", "선호도 업데이트 실패: ${exception.message}")
+                    // 에러 상태 처리 필요
+                }
+            )
+        }
+    }
+}

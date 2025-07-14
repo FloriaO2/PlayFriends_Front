@@ -24,30 +24,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.material3.CardDefaults
 import androidx.navigation.NavController
 import com.example.playfriends.ui.component.AppTopBar
+import com.example.playfriends.ui.component.HexagonGraph
 import kotlinx.coroutines.launch
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.playfriends.ui.viewmodel.UserViewModel
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    onLogout: () -> Unit = {}
+    userViewModel: UserViewModel = viewModel(),
+    onLogout: () -> Unit
 ) {
     val bgColor = Color(0xFFF1FFF4)
     val tagColor = Color(0xFFECECEC)
-    
 
+    val user by userViewModel.user.collectAsState()
+
+    // 화면이 처음 로드될 때 사용자 정보를 가져옵니다.
+    LaunchedEffect(Unit) {
+        userViewModel.getCurrentUser()
+    }
 
     Scaffold(
         topBar = {
             AppTopBar(
                 onLogoClick = { navController.navigate("home") },
                 onProfileClick = { navController.navigate("profile") },
-                profileInitial = "A"
+                profileInitial = user?.username?.first()?.toString() ?: "P"
             )
         },
         containerColor = bgColor
@@ -69,7 +76,8 @@ fun ProfileScreen(
 
             // 프로필 상단 섹션
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -81,7 +89,12 @@ fun ProfileScreen(
                         .background(Color(0xFF7E57C2)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("A", color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        user?.username?.first()?.toString() ?: "P",
+                        color = Color.White,
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(24.dp))
@@ -92,25 +105,28 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        "닉네임 : ABC",
+                        "닉네임 : ${user?.username ?: "로딩 중..."}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xA9000000)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(4.dp))
-                    
+
                     Text(
-                        "아이디 : ABCDE",
+                        "아이디 : ${user?.userid ?: "로딩 중..."}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xA9000000)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     Box(
-                        modifier = Modifier.clickable { onLogout() }
+                        modifier = Modifier.clickable {
+                            userViewModel.logout()
+                            onLogout()
+                        }
                     ) {
                         Text(
                             "로그아웃",
@@ -119,8 +135,6 @@ fun ProfileScreen(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    
-
                 }
             }
 
@@ -145,7 +159,7 @@ fun ProfileScreen(
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = Color(0xFF228B22), fontWeight = FontWeight.Bold)) {
-                        append("[아이디]")
+                        append("[${user?.userid ?: ""}]")
                     }
                     append("님을 위한 취향 분석 레포트")
                 },
@@ -154,40 +168,14 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 육각형 placeholder
-            Box(
-                modifier = Modifier
-                    .size(240.dp)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val hexPath = Path()
-                    val radius = size.minDimension / 2f * 0.9f
-                    val centerX = size.width / 2f
-                    val centerY = size.height / 2f
-                    for (i in 0..5) {
-                        val angle = Math.toRadians((60.0 * i - 30.0))
-                        val x = centerX + radius * Math.cos(angle).toFloat()
-                        val y = centerY + radius * Math.sin(angle).toFloat()
-                        if (i == 0) {
-                            hexPath.moveTo(x, y)
-                        } else {
-                            hexPath.lineTo(x, y)
-                        }
-                    }
-                    hexPath.close()
-                    drawPath(
-                        path = hexPath,
-                        color = Color(0xFFD1E9D1),
-                        style = Fill
-                    )
-                    drawPath(
-                        path = hexPath,
-                        color = Color(0xFFB0EACD),
-                        style = Stroke(width = 6f)
-                    )
-                }
+            // PlayPreferences를 이용한 육각형 그래프
+            user?.play_preferences?.let {
+                HexagonGraph(
+                    playPreferences = it,
+                    modifier = Modifier
+                        .size(300.dp) // 그래프 크기 조정
+                        .fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

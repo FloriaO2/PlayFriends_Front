@@ -1,0 +1,149 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Setup Authentication System",
+        "description": "Implement user authentication functionality including sign-up, login, logout, and token management.",
+        "details": "Create authentication API endpoints and client-side components:\n1. Sign-up form with username and password validation\n2. Login form with error handling\n3. Implement JWT token generation and validation\n4. Store tokens securely in local storage or HTTP-only cookies\n5. Add authentication middleware for protected routes\n6. Create logout functionality that clears tokens\n\nAPI Endpoints:\n- POST /api/auth/signup - Create new user account\n- POST /api/auth/login - Authenticate and return token\n- POST /api/auth/logout - Invalidate token\n\nClient Components:\n- SignupForm.js - Form for new user registration\n- LoginForm.js - Form for user authentication\n- AuthContext.js - React context for managing auth state",
+        "testStrategy": "1. Unit tests for validation logic\n2. Integration tests for API endpoints\n3. E2E tests for signup and login flows\n4. Test token expiration and refresh mechanisms\n5. Test authentication middleware\n6. Verify secure storage of credentials\n7. Test error handling for invalid credentials",
+        "priority": "high",
+        "dependencies": [],
+        "status": "in-progress",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Implement User Profile Management",
+        "description": "Create user profile page where users can view and update their information and set their preferences for food and activities.",
+        "details": "Build the My Page section with the following features:\n1. Profile information display and edit functionality\n2. Form for updating username\n3. Comprehensive preference settings UI for food preferences (cuisine types, spice levels, dietary restrictions)\n4. Activity preference settings (indoor/outdoor, physical intensity, social/quiet)\n5. Save and load user preferences from backend\n\nAPI Endpoints:\n- GET /api/users/profile - Fetch user profile data\n- PUT /api/users/profile - Update profile information\n- GET /api/users/preferences - Get user preferences\n- PUT /api/users/preferences - Update user preferences\n\nComponents:\n- ProfilePage.js - Container for profile management\n- ProfileForm.js - Form for editing basic profile info\n- PreferenceForm.js - Complex form for detailed preference settings\n- PreferenceSlider.js - Reusable component for setting preference levels",
+        "testStrategy": "1. Unit tests for form validation\n2. Integration tests for profile update API\n3. Tests for preference saving and loading\n4. Verify preference data structure matches recommendation engine requirements\n5. UI tests for form submission and error handling\n6. Test preference persistence across sessions",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "in-progress",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Develop Group Creation and Management",
+        "description": "Implement functionality for users to create, view, update, and delete groups, as well as join and leave existing groups.",
+        "details": "Create group management features:\n1. Group creation form with name, start time, end time inputs\n2. Group listing page with search/filter capabilities\n3. Group detail view showing members and schedule\n4. Group edit functionality (owner only)\n5. Group deletion with confirmation (owner only)\n6. Join/leave group buttons with appropriate permissions\n\nAPI Endpoints:\n- POST /api/groups - Create a new group\n- GET /api/groups - List all active groups\n- GET /api/groups/:id - Get specific group details\n- PUT /api/groups/:id - Update group information\n- DELETE /api/groups/:id - Delete a group\n- POST /api/groups/:id/join - Join a group\n- POST /api/groups/:id/leave - Leave a group\n\nComponents:\n- GroupList.js - Display all available groups\n- GroupForm.js - Form for creating/editing groups\n- GroupDetail.js - Detailed view of a single group\n- GroupMemberList.js - Display group members\n- ConfirmationModal.js - Reusable confirmation dialog",
+        "testStrategy": "1. Unit tests for group creation validation\n2. Integration tests for all group API endpoints\n3. Permission testing for owner vs. member actions\n4. Test group listing pagination and filtering\n5. Test join/leave functionality with various edge cases\n6. Verify proper error handling for all operations\n7. Test group data persistence",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "in-progress",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Build Main Screen and Group Discovery",
+        "description": "Create the main application screen that displays all available groups and allows users to browse, search, and filter groups to join.",
+        "details": "Implement the main screen with the following features:\n1. Dashboard layout with navigation to key app sections\n2. Group discovery section with list/grid view options\n3. Search functionality by group name, time, or other attributes\n4. Filtering options (e.g., by time range, number of members)\n5. Quick-join buttons for groups\n6. Create group button/modal\n7. Visual indicators for groups user is already a member of\n\nAPI Endpoints:\n- GET /api/groups?search=term&filter=value - Get filtered groups\n\nComponents:\n- Dashboard.js - Main application screen\n- GroupDiscovery.js - Group browsing section\n- SearchBar.js - Reusable search component\n- FilterPanel.js - Group filtering options\n- GroupCard.js - Compact group display component\n- CreateGroupButton.js - Button/modal for group creation",
+        "testStrategy": "1. Unit tests for search and filter logic\n2. Integration tests for group discovery API\n3. UI tests for responsive layout\n4. Test search functionality with various inputs\n5. Test filter combinations\n6. Verify proper loading states and error handling\n7. Test navigation between main screen and group details",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "in-progress",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Implement Group Details Screen",
+        "description": "Create a comprehensive view for displaying group details, including member list, group information, and the confirmed schedule.",
+        "details": "Build the group details screen with:\n1. Group header with name, time range, and member count\n2. Member list with roles (owner vs. member)\n3. Group description and metadata\n4. Confirmed schedule display (if available)\n5. Owner-specific controls (edit, delete, schedule management)\n6. Join/leave buttons for non-owners\n7. Navigation back to group list\n\nComponents:\n- GroupDetailPage.js - Container for group details\n- GroupHeader.js - Display group name and basic info\n- MemberList.js - List group members with roles\n- ScheduleDisplay.js - Show confirmed schedule details\n- OwnerControls.js - Conditional controls for group owners\n- MemberControls.js - Controls for regular members\n\nAPI Integration:\n- Connect to group detail endpoint\n- Handle permission-based UI rendering\n- Implement join/leave functionality",
+        "testStrategy": "1. Unit tests for permission-based UI rendering\n2. Integration tests for group detail API\n3. Test conditional rendering of owner vs. member controls\n4. Verify schedule display with various data formats\n5. Test navigation between screens\n6. Test join/leave functionality\n7. Verify proper error handling and loading states",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          4
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Design Preference-Based Recommendation Engine",
+        "description": "Create the backend algorithm that analyzes group members' preferences and generates recommended activity categories.",
+        "details": "Implement the recommendation engine with these components:\n1. Preference aggregation algorithm to combine multiple users' preferences\n2. Weighting system for different preference types\n3. Category matching logic to map preferences to activity types\n4. Scoring system to rank potential categories\n5. Diversity logic to ensure varied recommendations\n\nAlgorithm outline:\n- Collect all group members' preferences\n- Normalize preference values across users\n- Calculate weighted average for each preference dimension\n- Map combined preferences to activity categories\n- Apply diversity rules to avoid similar recommendations\n- Return ranked list of recommended categories\n\nAPI Endpoints:\n- POST /api/groups/:id/recommend - Generate category recommendations\n\nData structures:\n- Define preference schema that maps to activity categories\n- Create category taxonomy with attributes that match preferences",
+        "testStrategy": "1. Unit tests for preference aggregation algorithm\n2. Test with various group sizes and preference combinations\n3. Verify diversity in recommendations\n4. Benchmark performance with large groups\n5. Test edge cases (conflicting preferences, missing data)\n6. Validate recommendation quality against expected outcomes\n7. Integration tests with the full preference dataset",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement Schedule Generation System",
+        "description": "Build functionality to generate concrete schedule proposals based on selected activity categories, including specific times, places, and activities.",
+        "details": "Create the schedule generation system with:\n1. Time slot allocation algorithm based on group's start/end times\n2. Activity duration estimation for different categories\n3. Location suggestion system with proximity considerations\n4. Schedule variation generator to create multiple proposals\n5. Schedule scoring based on preference alignment\n\nAlgorithm components:\n- Break group time range into appropriate slots\n- Assign activities to slots based on selected categories\n- Find suitable locations for each activity\n- Generate multiple variations with different combinations\n- Score each complete schedule based on overall fit\n\nAPI Endpoints:\n- POST /api/groups/:id/schedules/generate - Generate schedule proposals\n\nData structures:\n- Schedule object with activities, times, and locations\n- Activity object with category, duration, and location",
+        "testStrategy": "1. Unit tests for time slot allocation\n2. Test schedule generation with various time constraints\n3. Verify location suggestions are reasonable\n4. Test variation generation for diversity\n5. Benchmark performance with complex constraints\n6. Validate schedule quality against expected outcomes\n7. Integration tests with the recommendation engine",
+        "priority": "high",
+        "dependencies": [
+          6
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Develop Schedule Recommendation UI",
+        "description": "Create the user interface for group owners to request category recommendations, view and select from generated schedule proposals.",
+        "details": "Build the schedule recommendation UI with:\n1. Category recommendation request button (owner only)\n2. Visual display of recommended categories with selection mechanism\n3. Generate schedules button after categories are selected\n4. Schedule comparison view showing multiple proposals\n5. Schedule detail view with timeline visualization\n6. Schedule confirmation mechanism\n\nComponents:\n- CategoryRecommendation.js - Display and select categories\n- ScheduleGenerator.js - Interface for generating schedules\n- ScheduleComparisonView.js - Compare multiple schedules\n- ScheduleTimeline.js - Visual timeline of activities\n- ScheduleConfirmation.js - Confirm final schedule\n\nAPI Integration:\n- Connect to category recommendation endpoint\n- Implement schedule generation request\n- Handle schedule confirmation",
+        "testStrategy": "1. Unit tests for UI components\n2. Integration tests with recommendation API\n3. Test category selection interface\n4. Verify schedule comparison functionality\n5. Test timeline visualization with various schedules\n6. Test confirmation flow\n7. Verify owner-only access to these features",
+        "priority": "medium",
+        "dependencies": [
+          5,
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement Schedule Confirmation and Display",
+        "description": "Create functionality for group owners to confirm a final schedule and for all group members to view the confirmed schedule.",
+        "details": "Build the schedule confirmation system with:\n1. Schedule selection mechanism for group owner\n2. Confirmation API to save the selected schedule\n3. Notification system to alert members of confirmed schedule\n4. Read-only schedule display for group members\n5. Schedule detail view with all activity information\n6. Optional: calendar export functionality\n\nComponents:\n- ScheduleSelector.js - Interface for owner to select final schedule\n- ConfirmedSchedule.js - Display for the final schedule\n- ScheduleNotification.js - Alert for schedule confirmation\n- ScheduleExport.js - Export schedule to calendar format\n\nAPI Endpoints:\n- POST /api/groups/:id/schedules/confirm - Confirm final schedule\n- GET /api/groups/:id/schedule - Get confirmed schedule",
+        "testStrategy": "1. Unit tests for schedule selection UI\n2. Integration tests for confirmation API\n3. Test notification delivery\n4. Verify schedule display for different user roles\n5. Test schedule export functionality\n6. Verify proper error handling\n7. Test with various schedule formats and edge cases",
+        "priority": "medium",
+        "dependencies": [
+          8
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Finalize Application Integration and Testing",
+        "description": "Integrate all components, implement navigation flow, conduct end-to-end testing, and prepare the application for deployment.",
+        "details": "Complete the application with:\n1. Implement full navigation flow between all screens\n2. Create consistent header/footer with navigation controls\n3. Add loading states and error handling throughout the app\n4. Implement data refresh mechanisms\n5. Add final styling and UI polish\n6. Conduct comprehensive testing across all features\n7. Optimize performance and fix any identified issues\n8. Prepare deployment configuration\n\nComponents:\n- AppNavigation.js - Main navigation structure\n- ErrorBoundary.js - Global error handling\n- LoadingIndicator.js - Consistent loading states\n- NotificationSystem.js - Global notification handling\n\nIntegration points:\n- Connect all screens and features\n- Ensure consistent authentication state\n- Verify data flow between components",
+        "testStrategy": "1. End-to-end testing of complete user flows\n2. Cross-browser compatibility testing\n3. Responsive design testing on various devices\n4. Performance testing under load\n5. Security testing of authentication and data access\n6. Usability testing with sample users\n7. Regression testing after final changes\n8. Deployment testing in staging environment",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-07-14T18:11:24.972Z",
+      "updated": "2025-07-14T18:11:49.079Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

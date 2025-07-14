@@ -1,0 +1,42 @@
+# Product Requirements Document: PlayFriends
+
+## 1. Application Overview
+PlayFriends is an application that helps users plan activities with their friends. Users can create and join groups, set their food and play preferences, and receive optimized schedule recommendations from the backend based on the group's collective preferences.
+
+## 2. Core Features
+
+### 2.1. User Authentication
+- **Sign-up:** Users can create a new account with a unique ID, username, and password.
+- **Login:** Registered users can log in using their ID and password to receive an access token.
+- **Logout:** Logged-in users can log out.
+- **Token Management:** The access token must be stored securely on the client and included in the header of all authenticated API requests.
+
+### 2.2. Group Management
+- **Create Group:** Users can create a new group by providing a group name, start time, and end time. The creator automatically becomes the group owner.
+- **View All Groups:** Users can browse a list of all active groups to join.
+- **View Group Details:** Users can view the details of a specific group, including its members and confirmed schedule.
+- **Update Group:** The group owner can modify the group's information.
+- **Delete Group:** The group owner can delete the group.
+- **Join Group:** Users can join an existing group.
+- **Leave Group:** Users can leave a group they are a member of.
+
+### 2.3. User Profile & Preferences
+- **My Page:** Users can view a list of groups they belong to and edit their profile information.
+- **Update Profile:** Users can update their username.
+- **Set Preferences:** Users can set and modify their detailed food and play preferences (e.g., tastes, activeness level) on their profile page. This is a critical input for the recommendation engine.
+
+### 2.4. Schedule Recommendation and Confirmation
+- **Recommend Categories:** The group owner can request a list of recommended activity categories based on the combined preferences of all group members.
+- **Generate Schedule Suggestions:** Based on selected categories, the group owner can generate multiple concrete schedule proposals, each containing specific times, places, and activities.
+- **Confirm Schedule:** The group owner can select one of the suggested schedules to be the final, confirmed schedule for the group.
+
+## 3. Development Flow Recommendation
+1.  **Authentication:** Implement sign-up and login pages, and set up token-based authentication logic.
+2.  **Main/Group Discovery:** Create a screen to display all groups and allow users to create or join them.
+3.  **My Page:** Implement the user profile screen for viewing user info and setting preferences.
+4.  **Group Details:** Build the screen to show detailed group information, member lists, and the confirmed schedule. This screen should show owner-specific controls (edit, delete, recommend categories) conditionally.
+5.  **Schedule Creation Flow:**
+    - Display recommended categories to the group owner.
+    - Allow the owner to select categories and request schedule suggestions.
+    - Display the various schedule proposals for comparison.
+    - Allow the owner to confirm the final schedule.

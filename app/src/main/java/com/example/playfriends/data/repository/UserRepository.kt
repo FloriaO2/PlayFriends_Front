@@ -201,6 +201,36 @@ class UserRepository {
         }
     }
 
+    // 사용자 정보 수정
+    suspend fun updateUserMe(userUpdate: UserUpdate): Result<User> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.updateUserMe(userUpdate)
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    Result.success(it)
+                } ?: Result.failure(Exception("사용자 정보 수정 실패: 응답 없음"))
+            } else {
+                Result.failure(Exception("사용자 정보 수정 실패: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // 선호도 수정
+    suspend fun updatePreferences(preferences: PreferencesUpdate): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.updatePreferences(preferences)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("선호도 수정 실패: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getUserById(userId: String): Result<User> = withContext(Dispatchers.IO) {
         val response = apiService.getUserById(userId)
         if (response.isSuccessful) {
@@ -214,4 +244,4 @@ class UserRepository {
             Result.failure(Exception(response.errorBody()?.string() ?: "사용자 정보 조회 실패"))
         }
     }
-} 
+}
