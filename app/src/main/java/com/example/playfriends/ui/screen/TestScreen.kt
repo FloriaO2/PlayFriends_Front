@@ -2,6 +2,7 @@ package com.example.playfriends.ui.screen
 
 import kotlin.math.roundToInt
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,15 +19,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun TestScreen(navController: NavController) {
     val tabTitles = listOf("음식 취향", "컨텐츠 취향")
     var selectedTabIndex by remember { mutableStateOf(0) }
-    
+
     // 음식 취향 상태 관리 - 각 옵션별로 개별 상태 관리
-    val foodPreferences = remember { mutableStateMapOf<String, Boolean>() }
-    
+    val foodPreferences = remember { mutableStateMapOf<String, Int>() }
+
     // 컨텐츠 취향 상태 관리
     val contentSliderValues = remember { mutableStateListOf(0f, 0f, 0f, 0f, 0f, 0f) }
 
@@ -50,7 +52,7 @@ fun TestScreen(navController: NavController) {
         ) {
             // 좌측: 다음에 하기 버튼
             Button(
-                onClick = { 
+                onClick = {
                     // 현재 스택을 확인하여 어디서 왔는지 판단
                     if (navController.previousBackStackEntry?.destination?.route == "login") {
                         // 회원가입에서 온 경우 홈으로 이동
@@ -85,7 +87,7 @@ fun TestScreen(navController: NavController) {
                     )
                 }
             }
-            
+
             // 중앙: 제목
             Text(
                 text = "취향 테스트",
@@ -94,10 +96,10 @@ fun TestScreen(navController: NavController) {
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Center)
             )
-            
+
             // 우측: 완료 버튼
             Button(
-                onClick = { 
+                onClick = {
                     // 현재 스택을 확인하여 어디서 왔는지 판단
                     if (navController.previousBackStackEntry?.destination?.route == "login") {
                         // 회원가입에서 온 경우 홈으로 이동
@@ -163,8 +165,8 @@ fun TestScreen(navController: NavController) {
 
 @Composable
 fun FoodPreferenceTab(
-    navController: NavController, 
-    foodPreferences: MutableMap<String, Boolean>
+    navController: NavController,
+    foodPreferences: MutableMap<String, Int>
 ) {
     val categories = listOf(
         "재료" to listOf("고기", "채소", "생선", "우유", "계란", "밀가루"),
@@ -172,7 +174,7 @@ fun FoodPreferenceTab(
         "조리 방법" to listOf("국물", "구이", "찜/찌개", "볶음", "튀김", "날것", "음료"),
         "조리 방식" to listOf("한식", "중식", "일식", "양식", "동남아식")
     )
-    
+
     val scrollState = rememberScrollState()
 
     Column(
@@ -185,7 +187,8 @@ fun FoodPreferenceTab(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 4.dp)
+                    .padding(horizontal = 12.dp), // 좌우 패딩 추가
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFFFA)),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 shape = RoundedCornerShape(12.dp)
@@ -204,55 +207,27 @@ fun FoodPreferenceTab(
                             .fillMaxWidth()
                             .padding(bottom = 12.dp)
                     )
-                    
+
                     // 3열로 배치하기 위해 옵션들을 3개씩 묶기
-                    options.chunked(3).forEachIndexed { rowIndex, rowOptions ->
+                    // 기존: options.chunked(3).forEachIndexed { ... Row { ... PreferenceItem ... } }
+                    // 변경: 한 줄에 하나씩만 보이도록 Column으로 배치
+                    options.forEach { option ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 2.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // 첫 번째 열
-                            if (rowOptions.isNotEmpty()) {
-                                PreferenceItem(
-                                    option = rowOptions[0], 
-                                    category = title,
-                                    foodPreferences = foodPreferences,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            
-                            // 두 번째 열
-                            if (rowOptions.size > 1) {
-                                PreferenceItem(
-                                    option = rowOptions[1], 
-                                    category = title,
-                                    foodPreferences = foodPreferences,
-                                    modifier = if (rowOptions.size == 2) Modifier.weight(2f).offset(x = (-4).dp) else Modifier.weight(1f)
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                            
-                            // 세 번째 열 (마지막 행에 항목이 2개만 있으면 표시하지 않음)
-                            if (rowOptions.size > 2) {
-                                PreferenceItem(
-                                    option = rowOptions[2], 
-                                    category = title,
-                                    foodPreferences = foodPreferences,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            } else if (rowOptions.size == 2) {
-                                // 마지막 행에 항목이 2개만 있으면 빈 공간 추가하지 않음
-                            } else {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
+                            PreferenceItem(
+                                option = option,
+                                category = title,
+                                foodPreferences = foodPreferences
+                            )
                         }
                     }
                 }
             }
-            
+
             // 카드 간격 조정
             if (index < categories.size - 1) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -268,39 +243,38 @@ fun FoodPreferenceTab(
 
 @Composable
 fun PreferenceItem(
-    option: String, 
+    option: String,
     category: String,
-    foodPreferences: MutableMap<String, Boolean>,
-    modifier: Modifier = Modifier
+    foodPreferences: MutableMap<String, Int>
 ) {
     val key = "${category}_${option}"
-    val isChecked = foodPreferences[key] ?: false
-    
+    val preferenceLevel = foodPreferences[key] as? Int ?: 0 // -1: 불호, 0: 무난, 1: 호
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(vertical = 4.dp)
             .padding(horizontal = 8.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .size(24.dp)
-                .clickable {
-                    foodPreferences[key] = !isChecked
-                }
-        ) {
-            Text(
-                text = if (isChecked) "❤️" else "🤍",
-                fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
-        Spacer(modifier = Modifier.width(8.dp))
+        // 텍스트를 좌측에 정렬
         Text(
             text = option,
-            fontSize = 13.sp,
-            color = if (isChecked) Color(0xFF228B22) else Color(0xFF666666),
-            fontWeight = if (isChecked) FontWeight.Medium else FontWeight.Normal
+            fontSize = 15.sp, // 크기 키움
+            color = when (preferenceLevel) {
+                1 -> Color(0xFF228B22)
+                -1 -> Color(0xFFE57373)
+                else -> Color(0xFF666666)
+            },
+            fontWeight = if (preferenceLevel != 0) FontWeight.Medium else FontWeight.Normal,
+            modifier = Modifier.weight(1f), // 좌측 정렬, 남는 공간 차지
+            textAlign = TextAlign.Start
+        )
+        // 버튼을 우측 끝에 정렬
+        ThreeWaySwitch(
+            value = preferenceLevel,
+            onValueChange = { foodPreferences[key] = it },
+            modifier = Modifier // 우측 끝 정렬
         )
     }
 }
@@ -334,7 +308,7 @@ fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList
                     .fillMaxWidth()
                     .padding(bottom = 4.dp)
             )
-            
+
             // 좌우 라벨과 슬라이더
             Row(
                 modifier = Modifier
@@ -349,7 +323,7 @@ fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList
                     color = Color.Gray,
                     modifier = Modifier.width(60.dp)
                 )
-                
+
                 // 슬라이더
                 Box(
                     modifier = Modifier.weight(1f)
@@ -366,7 +340,7 @@ fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-                
+
                 // 오른쪽 라벨
                 Text(
                     text = label.split(" / ")[1].replace("1:", ""),
@@ -376,7 +350,7 @@ fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList
                     textAlign = TextAlign.End
                 )
             }
-            
+
             // 마지막 항목이 아닌 경우에만 가로선 추가
             if (index < preferences.size - 1) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -391,6 +365,50 @@ fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList
                 // 마지막 항목인 경우 아래쪽 padding 추가
                 Spacer(modifier = Modifier.height(50.dp))
             }
+        }
+    }
+}
+
+@Composable
+fun ThreeWaySwitch(
+    value: Int, // -1, 0, 1
+    onValueChange: (Int) -> Unit,
+    labels: List<String> = listOf("불호", "무난", "호"),
+    modifier: Modifier = Modifier
+) {
+    val selectedColors = listOf(Color(0xFFE57373), Color(0xFF4B4B4B), Color(0xFF228B22))
+    val unselectedColor = Color(0xFFE0E0E0)
+    Row(
+        modifier = modifier
+            .height(24.dp)
+            .width(180.dp) // 가로 길이 살짝 줄임
+            .clip(RoundedCornerShape(16.dp))
+            .background(unselectedColor)
+            .border(1.dp, Color.LightGray, RoundedCornerShape(16.dp))
+    ) {
+        listOf(-1, 0, 1).forEachIndexed { idx, level ->
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .background(
+                        if (value == level) selectedColors[idx] else Color.Transparent,
+                        RoundedCornerShape(16.dp)
+                    )
+                    .clickable { onValueChange(level) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = labels[idx],
+                    color = if (value == level) {
+                        if (level == 0) Color.White else Color.White
+                    } else Color.Black,
+                    fontWeight = if (value == level) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    fontSize = 13.sp // 텍스트 크기 키움
+                )
+            }
+            // 세로 구분선 제거: 아무것도 하지 않음
         }
     }
 }
