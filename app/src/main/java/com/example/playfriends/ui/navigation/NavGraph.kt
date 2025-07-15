@@ -6,15 +6,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.playfriends.ui.screen.HomeScreen
 import com.example.playfriends.ui.screen.LoginScreen
 import com.example.playfriends.ui.screen.GroupScreen
 import com.example.playfriends.ui.screen.ProfileScreen
 import com.example.playfriends.ui.screen.GroupPlanScreen
 import com.example.playfriends.ui.screen.TestScreen
+import com.example.playfriends.ui.viewmodel.UserViewModel
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(
+    navController: NavHostController,
+    userViewModel: UserViewModel = viewModel()
+) {
     rememberAuthState(navController)
 
     NavHost(
@@ -48,7 +53,16 @@ fun NavGraph(navController: NavHostController) {
         }
         composable("profile") {
             ProfileScreen(
-                navController = navController
+                navController = navController,
+                onLogout = {
+                    userViewModel.logout()
+                    navController.navigate("login") {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
         composable("test") {
