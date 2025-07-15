@@ -164,9 +164,9 @@ fun ProfileScreen(
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = Color(0xFF228B22), fontWeight = FontWeight.Bold)) {
-                        append("[${user?.username ?: "고객"}]")
+                        append("${user?.username ?: "고객"}")
                     }
-                    append("님을 위한 취향 분석 레포트")
+                    append(" 님을 위한 취향 분석 레포트")
                 },
                 fontSize = 18.sp
             )
