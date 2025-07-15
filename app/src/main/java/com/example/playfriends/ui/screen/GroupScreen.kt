@@ -182,7 +182,7 @@ fun GroupScreen(
                 .verticalScroll(scrollState)
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
         ) {
-            Spacer(modifier = Modifier.height(11.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 그룹명/날짜 + 초대코드/위치 (2줄로 분리, 양끝 배치)
             Column(
@@ -251,7 +251,7 @@ fun GroupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
             // 참여자 카드
             group?.let { currentGroup ->
@@ -270,7 +270,11 @@ fun GroupScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Person, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(currentGroup.members.find { it.id == currentGroup.owner_id }?.name ?: "Unknown", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    (currentGroup.members.find { it.id == currentGroup.owner_id }?.name ?: "Unknown") + " (방장)",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                             IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
                                 Icon(Icons.Default.ExitToApp, contentDescription = "나가기", tint = Color(0xFF942020), modifier = Modifier.size(24.dp))
@@ -299,7 +303,7 @@ fun GroupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(35.dp))
+            Spacer(modifier = Modifier.height(30.dp))
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0E0E0)))
             Spacer(modifier = Modifier.height(20.dp))
 
