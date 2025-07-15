@@ -1,5 +1,6 @@
 package com.example.playfriends.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.playfriends.data.model.*
@@ -80,6 +81,7 @@ class GroupViewModel : ViewModel() {
     // 특정 그룹 조회
     fun getGroup(groupId: String) {
         viewModelScope.launch {
+            Log.d("GroupViewModel", "getGroup called with groupId: $groupId")
             _groupOperationState.value = GroupOperationState.Loading
 
             val result = groupRepository.getGroup(groupId)
@@ -87,9 +89,11 @@ class GroupViewModel : ViewModel() {
                 onSuccess = { group ->
                     _selectedGroup.value = group
                     _groupOperationState.value = GroupOperationState.Success("그룹 정보를 불러왔습니다")
+                    Log.d("GroupViewModel", "Group data fetched successfully: $group")
                 },
                 onFailure = { exception ->
                     _groupOperationState.value = GroupOperationState.Error(exception.message ?: "그룹 조회 실패")
+                    Log.e("GroupViewModel", "Failed to fetch group data", exception)
                 }
             )
         }
@@ -184,6 +188,10 @@ class GroupViewModel : ViewModel() {
         _groupOperationState.value = GroupOperationState.Idle
     }
 
+    fun clearScheduleSuggestions() {
+        _scheduleSuggestions.value = emptyList()
+    }
+
     // 카테고리 추천
     fun recommendCategories(groupId: String) {
         viewModelScope.launch {
@@ -205,7 +213,10 @@ class GroupViewModel : ViewModel() {
     fun createScheduleSuggestions(groupId: String, categories: List<String>) {
         viewModelScope.launch {
             _groupOperationState.value = GroupOperationState.Loading
-            val result = groupRepository.createSchedule(groupId, mapOf("categories" to categories))
+            Log.d("GroupViewModel", "요청중...")
+            val scheduleRequest = ScheduleRequest(categories)
+            val result = groupRepository.createSchedule(groupId, scheduleRequest)
+            Log.d("GroupViewModel", "요청완료...$result")
             result.fold(
                 onSuccess = { response ->
                     _scheduleSuggestions.value = response.schedules

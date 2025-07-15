@@ -4,6 +4,7 @@ import com.example.playfriends.data.api.RetrofitClient
 import com.example.playfriends.data.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.util.Log
 
 class GroupRepository {
     private val apiService = RetrofitClient.apiService
@@ -151,9 +152,11 @@ class GroupRepository {
     }
 
     // 스케줄 제안 생성
-    suspend fun createSchedule(groupId: String, categories: Map<String, List<String>>): Result<ListScheduleResponse> = withContext(Dispatchers.IO) {
+    suspend fun createSchedule(groupId: String, scheduleRequest: ScheduleRequest): Result<ListScheduleResponse> = withContext(Dispatchers.IO) {
         try {
-            val response = apiService.createSchedule(groupId, categories)
+            Log.d("GroupRepository", "요청중...")
+            val response = apiService.createSchedule(groupId, scheduleRequest)
+            Log.d("GroupRepository", "요청완료...")
             if (response.isSuccessful) {
                 response.body()?.let { Result.success(it) } ?: Result.failure(Exception("스케줄 제안 응답 없음"))
             } else {
