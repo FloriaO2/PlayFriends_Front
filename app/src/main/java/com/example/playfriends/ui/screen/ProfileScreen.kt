@@ -33,6 +33,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.playfriends.ui.viewmodel.UserViewModel
+import kotlin.random.Random
 
 @Composable
 fun ProfileScreen(
@@ -73,9 +74,9 @@ fun ProfileScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
-            Text("Profile", fontSize = 32.sp, fontWeight = FontWeight.Black)
+            Text("Profile", fontSize = 28.sp, fontWeight = FontWeight.Black)
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -83,13 +84,13 @@ fun ProfileScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 32.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 좌측: 프로필 원형 아이콘
                 Box(
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(100.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF7E57C2)),
                     contentAlignment = Alignment.Center
@@ -110,23 +111,36 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        "닉네임 : ${user?.username ?: "로딩 중..."}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xA9000000)
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color(0xA9000000))) {
+                                append("닉네임: ")
+                            }
+                            withStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xA9000000))) {
+                                append(user?.username ?: "로딩 중...")
+                            }
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Unspecified
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        "아이디 : ${user?.userid ?: "로딩 중..."}",
-
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xA9000000)
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color(0xA9000000))) {
+                                append("아이디: ")
+                            }
+                            withStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xA9000000))) {
+                                append(user?.userid ?: "로딩 중...")
+                            }
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Unspecified
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Box(
                         modifier = Modifier.clickable {
@@ -135,7 +149,7 @@ fun ProfileScreen(
                     ) {
                         Text(
                             "로그아웃",
-                            color = Color(0xFF8B0000),
+                            color = Color(0xFFB21111),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -151,27 +165,27 @@ fun ProfileScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA1D0A3)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(35.dp)
             ) {
                 Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("취향 테스트 다시 보러 가기", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                Text("취향 테스트 다시 보러 가기", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black)
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(23.dp))
 
             // 취향 분석 레포트 타이틀
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = Color(0xFF228B22), fontWeight = FontWeight.Bold)) {
-                        append("[${user?.username ?: "고객"}]")
+                        append("${user?.username ?: "고객"}")
                     }
-                    append("님을 위한 취향 분석 레포트")
+                    append(" 님을 위한 취향 분석 레포트")
                 },
                 fontSize = 18.sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             // PlayPreferences를 이용한 육각형 그래프
             user?.play_preferences?.let {
@@ -187,11 +201,37 @@ fun ProfileScreen(
 
             // 성향 분석 결과 텍스트
             Text("취향 분석 결과,", fontSize = 16.sp)
+            // 칭호 계산
+            val play = user?.play_preferences
+            val title = remember(play) {
+                if (play == null) "-" else {
+                    val map = mapOf(
+                        "도파민" to play.vibe_level,
+                        "붐빔" to play.crowd_level,
+                        "활동성" to play.activeness_level,
+                        "유행" to play.trend_level,
+                        "계획성" to play.planning_level,
+                        "실내" to play.location_preference
+                    )
+                    val max = map.values.maxOrNull() ?: 0f
+                    val maxTypes = map.filter { it.value == max }.keys.toList()
+                    val selected = maxTypes.random()
+                    when (selected) {
+                        "도파민" -> "스릴 헌터"
+                        "붐빔" -> "인간 칵테일"
+                        "활동성" -> "용감한 모험가"
+                        "유행" -> "앞서가는 선구자"
+                        "계획성" -> "전략의 귀재"
+                        "실내" -> "고요한 사색가"
+                        else -> "-"
+                    }
+                }
+            }
             Text(
                 buildAnnotatedString {
                     append("당신은 ")
                     withStyle(SpanStyle(color = Color(0xFF7EA86A), fontWeight = FontWeight.Bold)) {
-                        append("용감한 모험가")
+                        append(title)
                     }
                     append("입니다.")
                 },
@@ -199,48 +239,8 @@ fun ProfileScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(50.dp))
-
-            // 추천 콘텐츠 카드
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text(
-                        "⭐ 놀이 콘텐츠 추천 ⭐",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val tags = listOf("놀이공원", "방탈출 카페", "공방", "팝업")
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(tags) { tag ->
-                            Box(
-                                modifier = Modifier
-                                    .background(tagColor, RoundedCornerShape(50))
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Text(text = tag, fontSize = 14.sp)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
-        
 
-        }
+
     }
+}
