@@ -13,7 +13,7 @@ import android.util.Log
 class UserRepository {
     private val apiService = RetrofitClient.apiService
     private val gson = Gson()
-    
+
     // 로그인
     suspend fun login(loginRequest: LoginRequest): Result<Token> = withContext(Dispatchers.IO) {
         try {
@@ -50,7 +50,7 @@ class UserRepository {
             Result.failure(Exception(errorMessage))
         }
     }
-    
+
     // 로그아웃
     suspend fun logout(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -68,7 +68,7 @@ class UserRepository {
             Result.failure(e)
         }
     }
-    
+
     // 회원가입
     suspend fun createUser(userCreate: UserCreate): Result<User> = withContext(Dispatchers.IO) {
         try {
@@ -95,14 +95,14 @@ class UserRepository {
             Result.failure(Exception(errorMessage))
         }
     }
-    
+
     // 에러 응답 파싱 헬퍼 함수
     private fun parseErrorResponse(response: retrofit2.Response<*>, statusCode: Int): String {
         return try {
             val errorBody = response.errorBody()?.string()
             if (!errorBody.isNullOrEmpty()) {
                 val errorResponse = gson.fromJson(errorBody, ErrorResponse::class.java)
-                
+
                 // 백엔드에서 보내는 구체적인 에러 메시지 우선 사용
                 when {
                     errorResponse.detail?.contains("already exists", ignoreCase = true) == true -> "이미 존재하는 ID입니다."
@@ -124,7 +124,7 @@ class UserRepository {
             getDefaultErrorMessage(statusCode)
         }
     }
-    
+
     // 기본 에러 메시지 반환
     private fun getDefaultErrorMessage(statusCode: Int): String {
         return when (statusCode) {
@@ -135,7 +135,7 @@ class UserRepository {
             else -> "회원가입에 실패했습니다. (오류 코드: $statusCode)"
         }
     }
-    
+
     // 현재 사용자 정보 조회
     suspend fun getCurrentUser(): Result<User> = withContext(Dispatchers.IO) {
         try {
@@ -154,7 +154,7 @@ class UserRepository {
             Result.failure(e)
         }
     }
-    
+
     // 사용자의 그룹 목록 조회
     suspend fun getUserGroups(userId: String): Result<GroupList> = withContext(Dispatchers.IO) {
         try {
@@ -188,16 +188,16 @@ class UserRepository {
                 Result.success(message)
             } else {
                 val errorMsg = when {
-                    response.code() == 404 -> "존재하지 않는 그룹입니다."
+                    response.code() == 404 -> "존재하지 않는 초대코드입니다."
                     response.code() == 400 -> "이미 참여 중인 그룹입니다."
                     response.code() == 500 && errorBodyStr.contains("not found", ignoreCase = true) -> "존재하지 않는 그룹입니다."
-                    response.code() == 500 -> "존재하지 않는 그룹입니다."
+                    response.code() == 500 -> "존재하지 않는 초대코드입니다."
                     else -> "그룹 참여에 실패했습니다."
                 }
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            Result.failure(Exception("그룹 참여 중 오류가 발생했습니다: ${e.message}"))
+            Result.failure(Exception("그룹 참여 중 오류가 발생했습니다."))
         }
     }
 
@@ -231,5 +231,5 @@ class UserRepository {
         }
     }
 
-    
+
 }
