@@ -31,6 +31,14 @@ interface ApiService {
     // 특정 사용자 정보 조회
     @GET("api/v1/users/{user_id}")
     suspend fun getUserById(@Path("user_id") userId: String): Response<User>
+
+    // 현재 사용자 정보 수정
+    @PUT("api/v1/users/me")
+    suspend fun updateUserMe(@Body userUpdate: UserUpdate): Response<User>
+
+    // 선호도 수정
+    @PUT("api/v1/users/preferences")
+    suspend fun updatePreferences(@Body preferences: PreferencesUpdate): Response<Unit>
     
     // ===== 그룹 관련 API =====
     
@@ -64,4 +72,4 @@ interface ApiService {
     // 그룹 탈퇴
     @DELETE("api/v1/groups/{group_id}/leave")
     suspend fun leaveGroup(@Path("group_id") groupId: String): Response<Message>
-} 
+}

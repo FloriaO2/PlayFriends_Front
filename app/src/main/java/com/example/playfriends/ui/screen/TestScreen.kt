@@ -20,17 +20,51 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.draw.clip
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.playfriends.data.model.*
+import com.example.playfriends.data.model.enums.*
+import com.example.playfriends.ui.viewmodel.UserViewModel
 
 @Composable
-fun TestScreen(navController: NavController) {
+fun TestScreen(
+    navController: NavController,
+    userViewModel: UserViewModel = viewModel()
+) {
     val tabTitles = listOf("음식 취향", "컨텐츠 취향")
     var selectedTabIndex by remember { mutableStateOf(0) }
 
-    // 음식 취향 상태 관리 - 각 옵션별로 개별 상태 관리
-    val foodPreferences = remember { mutableStateMapOf<String, Int>() }
+    val user by userViewModel.user.collectAsState()
+    val isLoading by userViewModel.isLoading.collectAsState()
 
-    // 컨텐츠 취향 상태 관리
-    val contentSliderValues = remember { mutableStateListOf(0f, 0f, 0f, 0f, 0f, 0f) }
+    // LaunchedEffect를 사용하여 화면이 처음 로드될 때 사용자 정보를 가져옵니다.
+    LaunchedEffect(Unit) {
+        userViewModel.getCurrentUser()
+    }
+
+    // user가 변경될 때마다 이 상태들을 다시 계산합니다.
+    val foodPreferences = remember { mutableStateMapOf<String, Int>() }
+    val contentSliderValues = remember { mutableStateMapOf<String, Float>() }
+
+    // 사용자 데이터가 로드되면 상태 맵을 업데이트합니다.
+    LaunchedEffect(user) {
+        user?.let { currentUser ->
+            // Food Preferences 업데이트
+            foodPreferences.clear()
+            currentUser.food_preferences.ingredients.forEach { pref -> foodPreferences["재료_${pref.name.name}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.tastes.forEach { pref -> foodPreferences["맛_${pref.name.name}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.cooking_methods.forEach { pref -> foodPreferences["조리 방법_${pref.name.name.replace("_", "/")}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.cuisine_types.forEach { pref -> foodPreferences["조리 방식_${pref.name.name}"] = pref.score.roundToInt() }
+
+            // Play Preferences 업데이트
+            contentSliderValues.clear()
+            contentSliderValues["붐비는 정도"] = currentUser.play_preferences.crowd_level
+            contentSliderValues["활동성"] = currentUser.play_preferences.activeness_level
+            contentSliderValues["유행 민감도"] = currentUser.play_preferences.trend_level
+            contentSliderValues["계획성"] = currentUser.play_preferences.planning_level
+            contentSliderValues["장소"] = currentUser.play_preferences.location_preference
+            contentSliderValues["분위기"] = currentUser.play_preferences.vibe_level
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -100,18 +134,38 @@ fun TestScreen(navController: NavController) {
             // 우측: 완료 버튼
             Button(
                 onClick = {
-                    // 현재 스택을 확인하여 어디서 왔는지 판단
-                    if (navController.previousBackStackEntry?.destination?.route == "login") {
-                        // 회원가입에서 온 경우 홈으로 이동
-                        navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
+                    // 1. FoodPreferences 객체 생성
+                    val foodPrefs = FoodPreferences(
+                        ingredients = foodPreferences.filterKeys { it.startsWith("재료_") }.map { (key, value) ->
+                            IngredientPreference(FoodIngredient.valueOf(key.substringAfter("재료_")), value.toFloat())
+                        },
+                        tastes = foodPreferences.filterKeys { it.startsWith("맛_") }.map { (key, value) ->
+                            TastePreference(FoodTaste.valueOf(key.substringAfter("맛_")), value.toFloat())
+                        },
+                        cooking_methods = foodPreferences.filterKeys { it.startsWith("조리 방법_") }.map { (key, value) ->
+                            val enumKey = key.substringAfter("조리 방법_").replace("/", "_")
+                            CookingMethodPreference(FoodCookingMethod.valueOf(enumKey), value.toFloat())
+                        },
+                        cuisine_types = foodPreferences.filterKeys { it.startsWith("조리 방식_") }.map { (key, value) ->
+                            CuisineTypePreference(FoodCuisineType.valueOf(key.substringAfter("조리 방식_")), value.toFloat())
                         }
-                    } else {
-                        // ProfileScreen에서 온 경우 ProfileScreen으로 돌아가기
-                        navController.navigate("profile") {
-                            popUpTo("test") { inclusive = true }
-                        }
-                    }
+                    )
+
+                    // 2. PlayPreferences 객체 생성
+                    val playPrefs = PlayPreferences(
+                        crowd_level = contentSliderValues["붐비는 정도"] ?: 0f,
+                        activeness_level = contentSliderValues["활동성"] ?: 0f,
+                        trend_level = contentSliderValues["유행 민감도"] ?: 0f,
+                        planning_level = contentSliderValues["계획성"] ?: 0f,
+                        location_preference = contentSliderValues["장소"] ?: 0f,
+                        vibe_level = contentSliderValues["분위기"] ?: 0f
+                    )
+
+                    // 3. ViewModel 함수 호출
+                    userViewModel.updatePreferences(foodPrefs, playPrefs)
+
+                    // 4. 이전 화면으로 돌아가기
+                    navController.popBackStack()
                 },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -154,10 +208,17 @@ fun TestScreen(navController: NavController) {
         }
 
         // 탭 내용을 스크롤 가능한 영역으로 감싸기
-        Box(modifier = Modifier.weight(1f)) {
-            when (selectedTabIndex) {
-                0 -> FoodPreferenceTab(navController, foodPreferences)
-                1 -> ContentPreferenceTab(navController, contentSliderValues)
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                when (selectedTabIndex) {
+                    0 -> FoodPreferenceTab(navController, foodPreferences)
+                    1 -> ContentPreferenceTab(navController, contentSliderValues)
+                }
             }
         }
     }
@@ -169,10 +230,10 @@ fun FoodPreferenceTab(
     foodPreferences: MutableMap<String, Int>
 ) {
     val categories = listOf(
-        "재료" to listOf("고기", "채소", "생선", "우유", "계란", "밀가루"),
-        "맛" to listOf("매운", "느끼한", "단", "짠", "쓴", "신"),
-        "조리 방법" to listOf("국물", "구이", "찜/찌개", "볶음", "튀김", "날것", "음료"),
-        "조리 방식" to listOf("한식", "중식", "일식", "양식", "동남아식")
+        "재료" to FoodIngredient.values().map { it.name },
+        "맛" to FoodTaste.values().map { it.name },
+        "조리 방법" to FoodCookingMethod.values().map { it.name.replace("_", "/") },
+        "조리 방식" to FoodCuisineType.values().map { it.name }
     )
 
     val scrollState = rememberScrollState()
@@ -280,7 +341,7 @@ fun PreferenceItem(
 }
 
 @Composable
-fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList<Float>) {
+fun ContentPreferenceTab(navController: NavController, sliderValues: MutableMap<String, Float>) {
     val preferences = listOf(
         "붐비는 정도" to "-1:조용 / 1:붐빔",
         "활동성" to "-1:관람형 / 1:체험형",
@@ -329,11 +390,11 @@ fun ContentPreferenceTab(navController: NavController, sliderValues: MutableList
                     modifier = Modifier.weight(1f)
                 ) {
                     Slider(
-                        value = sliderValues[index],
+                        value = sliderValues[title] ?: 0f,
                         onValueChange = { newValue ->
                             // 0.1 간격으로 반올림
                             val roundedValue = (newValue * 10).roundToInt() / 10f
-                            sliderValues[index] = roundedValue
+                            sliderValues[title] = roundedValue
                         },
                         valueRange = -1f..1f,
                         steps = 19, // -1.0부터 1.0까지 0.1 간격으로 19단계 (총 21개 위치)

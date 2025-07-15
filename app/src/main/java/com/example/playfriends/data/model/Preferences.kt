@@ -39,4 +39,10 @@ data class PlayPreferences(
     val planning_level: Float = 0.0f,     // 계획성 (-1: 즉흥, 1: 계획)
     val location_preference: Float = 0.0f, // 장소 (-1: 실외, 1: 실내)
     val vibe_level: Float = 0.0f          // 분위기 (-1: 안정, 1: 도파민 추구)
-) 
+)
+
+// 선호도 업데이트를 위한 모델
+data class PreferencesUpdate(
+    val food_preferences: FoodPreferences,
+    val play_preferences: PlayPreferences
+)
