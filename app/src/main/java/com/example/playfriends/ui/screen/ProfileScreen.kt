@@ -49,8 +49,6 @@ fun ProfileScreen(
     val bgColor = Color(0xFFF1FFF4)
     val tagColor = Color(0xFFECECEC)
 
-    val user by userViewModel.user.collectAsState()
-
     // 화면이 처음 로드될 때 사용자 정보를 가져옵니다.
     LaunchedEffect(Unit) {
         userViewModel.getCurrentUser()
@@ -132,7 +130,6 @@ fun ProfileScreen(
 
                     Box(
                         modifier = Modifier.clickable {
-                            userViewModel.logout()
                             onLogout()
                         }
                     ) {
