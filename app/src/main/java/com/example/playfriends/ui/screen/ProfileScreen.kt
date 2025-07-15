@@ -32,11 +32,22 @@ import androidx.navigation.NavController
 import com.example.playfriends.ui.component.AppTopBar
 import kotlinx.coroutines.launch
 
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.playfriends.ui.viewmodel.UserViewModel
+
 @Composable
 fun ProfileScreen(
     navController: NavController,
     onLogout: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val activity = context.findActivity() as? ComponentActivity
+    requireNotNull(activity) { "Activity를 찾을 수 없습니다." }
+    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
+    val user by userViewModel.user.collectAsState()
+
     val bgColor = Color(0xFFF1FFF4)
     val tagColor = Color(0xFFECECEC)
     
@@ -92,7 +103,7 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        "닉네임 : ABC",
+                        "닉네임 : ${user?.username ?: ""}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xA9000000)
@@ -101,7 +112,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     
                     Text(
-                        "아이디 : ABCDE",
+                        "아이디 : ${user?.userid ?: ""}",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xA9000000)
@@ -110,7 +121,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Box(
-                        modifier = Modifier.clickable { onLogout() }
+                        modifier = Modifier.clickable { userViewModel.logout() }
                     ) {
                         Text(
                             "로그아웃",
@@ -145,7 +156,7 @@ fun ProfileScreen(
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = Color(0xFF228B22), fontWeight = FontWeight.Bold)) {
-                        append("[아이디]")
+                        append("[${user?.username ?: "고객"}]")
                     }
                     append("님을 위한 취향 분석 레포트")
                 },

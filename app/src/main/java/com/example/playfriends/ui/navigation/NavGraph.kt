@@ -13,8 +13,8 @@ import com.example.playfriends.ui.screen.TestScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
-    val authState = rememberAuthState(navController)
-    
+    rememberAuthState(navController)
+
     NavHost(
         navController = navController,
         startDestination = "splash" // 스플래시 화면을 시작 화면으로 설정
@@ -24,14 +24,12 @@ fun NavGraph(navController: NavHostController) {
         }
         composable("login") {
             LoginScreen(
-                navController = navController,
-                onLoginSuccess = authState.onLoginSuccess
+                navController = navController
             )
         }
         composable("home") {
             HomeScreen(
-                navController = navController,
-                onLogout = authState.onLogout
+                navController = navController
             )
         }
         composable("group") {
@@ -42,8 +40,7 @@ fun NavGraph(navController: NavHostController) {
         }
         composable("profile") {
             ProfileScreen(
-                navController = navController,
-                onLogout = authState.onLogout
+                navController = navController
             )
         }
         composable("test") {
@@ -51,4 +48,3 @@ fun NavGraph(navController: NavHostController) {
         }
     }
 }
-
