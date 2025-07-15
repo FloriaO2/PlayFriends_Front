@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import com.example.playfriends.ui.component.AppTopBar
+import com.example.playfriends.ui.component.HexagonGraph
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -197,6 +198,21 @@ fun GroupScreen(
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0E0E0)))
             Spacer(modifier = Modifier.height(20.dp))
 
+            // PlayPreferences를 이용한 육각형 그래프
+            group?.play_preferences?.let {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    HexagonGraph(
+                        playPreferences = it,
+                        modifier = Modifier
+                            .size(300.dp) // 그래프 크기 조정
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+
             if (isOwner) {
                 // Owner UI
                 if (group!!.schedule == null) {
@@ -264,31 +280,6 @@ fun OwnerScheduleCreationUI(
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        // 육각형 placeholder
-        Box(
-            modifier = Modifier
-                .size(240.dp)
-        ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val hexPath = Path()
-            val radius = size.minDimension / 2f * 0.9f
-            val centerX = size.width / 2f
-            val centerY = size.height / 2f
-            for (i in 0..5) {
-                val angle = Math.toRadians((60.0 * i - 30.0))
-                val x = centerX + radius * Math.cos(angle).toFloat()
-                val y = centerY + radius * Math.sin(angle).toFloat()
-                if (i == 0) {
-                    hexPath.moveTo(x, y)
-                } else {
-                    hexPath.lineTo(x, y)
-                }
-            }
-            hexPath.close()
-            drawPath(path = hexPath, color = Color(0xFFD1E9D1), style = Fill)
-            drawPath(path = hexPath, color = Color(0xFFB0EACD), style = Stroke(width = 6f))
-        }
-    }
 }
 
     Spacer(modifier = Modifier.height(30.dp))

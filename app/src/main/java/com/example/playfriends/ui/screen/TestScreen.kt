@@ -52,10 +52,10 @@ fun TestScreen(
         user?.let { currentUser ->
             // Food Preferences 업데이트
             foodPreferences.clear()
-            currentUser.food_preferences.ingredients.forEach { pref -> foodPreferences["재료_${pref.name.name}"] = pref.score.roundToInt() }
-            currentUser.food_preferences.tastes.forEach { pref -> foodPreferences["맛_${pref.name.name}"] = pref.score.roundToInt() }
-            currentUser.food_preferences.cooking_methods.forEach { pref -> foodPreferences["조리 방법_${pref.name.name.replace("_", "/")}"] = pref.score.roundToInt() }
-            currentUser.food_preferences.cuisine_types.forEach { pref -> foodPreferences["조리 방식_${pref.name.name}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.ingredients.forEach { pref -> foodPreferences["재료_${pref.name.value}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.tastes.forEach { pref -> foodPreferences["맛_${pref.name.value}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.cooking_methods.forEach { pref -> foodPreferences["조리 방법_${pref.name.value}"] = pref.score.roundToInt() }
+            currentUser.food_preferences.cuisine_types.forEach { pref -> foodPreferences["요리 유형_${pref.name.value}"] = pref.score.roundToInt() }
 
             // Play Preferences 업데이트
             contentSliderValues.clear()
@@ -139,17 +139,20 @@ fun TestScreen(
                     // 1. FoodPreferences 객체 생성
                     val foodPrefs = FoodPreferences(
                         ingredients = foodPreferences.filterKeys { it.startsWith("재료_") }.map { (key, value) ->
-                            IngredientPreference(FoodIngredient.valueOf(key.substringAfter("재료_")), value.toFloat())
+                            val enumValue = key.substringAfter("재료_")
+                            IngredientPreference(FoodIngredient.values().first { it.value == enumValue }, value.toFloat())
                         },
                         tastes = foodPreferences.filterKeys { it.startsWith("맛_") }.map { (key, value) ->
-                            TastePreference(FoodTaste.valueOf(key.substringAfter("맛_")), value.toFloat())
+                            val enumValue = key.substringAfter("맛_")
+                            TastePreference(FoodTaste.values().first { it.value == enumValue }, value.toFloat())
                         },
                         cooking_methods = foodPreferences.filterKeys { it.startsWith("조리 방법_") }.map { (key, value) ->
-                            val enumKey = key.substringAfter("조리 방법_").replace("/", "_")
-                            CookingMethodPreference(FoodCookingMethod.valueOf(enumKey), value.toFloat())
+                            val enumValue = key.substringAfter("조리 방법_")
+                            CookingMethodPreference(FoodCookingMethod.values().first { it.value == enumValue }, value.toFloat())
                         },
-                        cuisine_types = foodPreferences.filterKeys { it.startsWith("조리 방식_") }.map { (key, value) ->
-                            CuisineTypePreference(FoodCuisineType.valueOf(key.substringAfter("조리 방식_")), value.toFloat())
+                        cuisine_types = foodPreferences.filterKeys { it.startsWith("요리 유형_") }.map { (key, value) ->
+                            val enumValue = key.substringAfter("요리 유형_")
+                            CuisineTypePreference(FoodCuisineType.values().first { it.value == enumValue }, value.toFloat())
                         }
                     )
 
@@ -232,10 +235,10 @@ fun FoodPreferenceTab(
     foodPreferences: MutableMap<String, Int>
 ) {
     val categories = listOf(
-        "재료" to FoodIngredient.values().map { it.name },
-        "맛" to FoodTaste.values().map { it.name },
-        "조리 방법" to FoodCookingMethod.values().map { it.name.replace("_", "/") },
-        "조리 방식" to FoodCuisineType.values().map { it.name }
+        "재료" to FoodIngredient.values().map { it.value },
+        "맛" to FoodTaste.values().map { it.value },
+        "조리 방법" to FoodCookingMethod.values().map { it.value },
+        "요리 유형" to FoodCuisineType.values().map { it.value }
     )
 
     val scrollState = rememberScrollState()
