@@ -128,22 +128,6 @@ fun GroupScreen(
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMsg by remember { mutableStateOf("") }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
-
-    // 스낵바 상태 추가
-    var showSnackbar by remember { mutableStateOf(false) }
-    var snackbarMsg by remember { mutableStateOf("") }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
-
-    // 스낵바 상태 추가
-    var showSnackbar by remember { mutableStateOf(false) }
-    var snackbarMsg by remember { mutableStateOf("") }
-
     LaunchedEffect(Unit) {
         groupViewModel.getGroup(groupId)
         userViewModel.getCurrentUser()
@@ -393,7 +377,6 @@ fun GroupScreen(
             }
         }
     }
-}
 
 @Composable
 fun OwnerScheduleCreationUI(
