@@ -44,10 +44,50 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.playfriends.ui.viewmodel.GroupViewModel
 import com.example.playfriends.ui.viewmodel.UserViewModel
 import android.util.Log
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.res.painterResource
+import com.example.playfriends.R
+import java.text.SimpleDateFormat
+import java.util.Locale
+import androidx.compose.ui.text.style.TextAlign
+
+// 커스텀 스낵바 컴포저블 추가
+@Composable
+fun CustomSnackbar(message: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.White, shape = RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "앱 로고",
+            modifier = Modifier.size(28.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = message,
+            color = Color(0xFF228B22),
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
 
 @Composable
 fun GroupScreen(
@@ -79,6 +119,14 @@ fun GroupScreen(
         "당구장", "보드게임카페", "만화카페", "PC방", "스포츠센터", "수영장"
     )
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    // 스낵바 상태 추가
+    var showSnackbar by remember { mutableStateOf(false) }
+    var snackbarMsg by remember { mutableStateOf("") }
+
     LaunchedEffect(groupId) {
         groupViewModel.getGroup(groupId)
     }
@@ -102,7 +150,12 @@ fun GroupScreen(
                 profileInitial = currentUser?.username?.first()?.toString() ?: "A"
             )
         },
-        containerColor = backgroundColor
+        containerColor = backgroundColor,
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                CustomSnackbar(message = data.visuals.message)
+            }
+        }
     ) { padding ->
         if (group == null) {
             // 로딩 또는 에러 처리
@@ -112,6 +165,14 @@ fun GroupScreen(
             return@Scaffold
         }
 
+        // 스낵바 상태 감지해서 띄우기
+        if (showSnackbar) {
+            LaunchedEffect(snackbarMsg) {
+                snackbarHostState.showSnackbar(snackbarMsg)
+                showSnackbar = false
+            }
+        }
+
         val isOwner = group?.owner_id == currentUser?._id
 
         Column(
@@ -119,33 +180,78 @@ fun GroupScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp)
+                .padding(start = 30.dp, end = 30.dp, top = 10.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 그룹명 + 그룹코드 + 시간/위치
-            Row(
+            // 그룹명/날짜 + 초대코드/위치 (2줄로 분리, 양끝 배치)
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 0.dp)
             ) {
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text(group!!.groupname, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
-                    Text(group!!._id, fontSize = 12.sp, color = Color.Gray) // 그룹 코드를 ID로 임시 대체
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        group!!.groupname,
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = titleColor
+                    )
+                    // 일정 포맷팅: 25/07/20 00:00 - 25/07/20 20:00
+                    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
+                    val start = try {
+                        outputFormat.format(inputFormat.parse(group!!.starttime) ?: "")
+                    } catch (e: Exception) { "" }
+                    val end = try {
+                        group!!.endtime?.let { outputFormat.format(inputFormat.parse(it) ?: "") } ?: ""
+                    } catch (e: Exception) { "" }
+                    val timeStr = if (end.isNotBlank()) "$start - $end" else start
+                    Text(
+                        timeStr,
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 12.dp)
+                    )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(group!!.starttime, fontSize = 16.sp, color = Color.Black) // 시간 포맷팅 필요
+                // 하단: 초대코드 - 위치
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(group!!._id))
+                            Toast.makeText(context, "복사가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                        },
+                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                        modifier = Modifier.height(IntrinsicSize.Min)
+                    ) {
+                        Text(group!!._id, fontSize = 12.sp, color = Color.Gray)
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("강남", fontSize = 16.sp) // 위치 정보 필요
+                        Text("대전", fontSize = 16.sp)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
             // 참여자 카드
             group?.let { currentGroup ->
@@ -269,27 +375,27 @@ fun OwnerScheduleCreationUI(
             modifier = Modifier
                 .size(240.dp)
         ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val hexPath = Path()
-            val radius = size.minDimension / 2f * 0.9f
-            val centerX = size.width / 2f
-            val centerY = size.height / 2f
-            for (i in 0..5) {
-                val angle = Math.toRadians((60.0 * i - 30.0))
-                val x = centerX + radius * Math.cos(angle).toFloat()
-                val y = centerY + radius * Math.sin(angle).toFloat()
-                if (i == 0) {
-                    hexPath.moveTo(x, y)
-                } else {
-                    hexPath.lineTo(x, y)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val hexPath = Path()
+                val radius = size.minDimension / 2f * 0.9f
+                val centerX = size.width / 2f
+                val centerY = size.height / 2f
+                for (i in 0..5) {
+                    val angle = Math.toRadians((60.0 * i - 30.0))
+                    val x = centerX + radius * Math.cos(angle).toFloat()
+                    val y = centerY + radius * Math.sin(angle).toFloat()
+                    if (i == 0) {
+                        hexPath.moveTo(x, y)
+                    } else {
+                        hexPath.lineTo(x, y)
+                    }
                 }
+                hexPath.close()
+                drawPath(path = hexPath, color = Color(0xFFD1E9D1), style = Fill)
+                drawPath(path = hexPath, color = Color(0xFFB0EACD), style = Stroke(width = 6f))
             }
-            hexPath.close()
-            drawPath(path = hexPath, color = Color(0xFFD1E9D1), style = Fill)
-            drawPath(path = hexPath, color = Color(0xFFB0EACD), style = Stroke(width = 6f))
         }
     }
-}
 
     Spacer(modifier = Modifier.height(30.dp))
 

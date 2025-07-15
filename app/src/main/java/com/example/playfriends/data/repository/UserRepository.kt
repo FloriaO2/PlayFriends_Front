@@ -197,7 +197,7 @@ class UserRepository {
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
-            Result.failure(Exception("그룹 참여 중 오류가 발생했습니다: ${e.message}"))
+            Result.failure(Exception("그룹 참여 중 오류가 발생했습니다."))
         }
     }
 

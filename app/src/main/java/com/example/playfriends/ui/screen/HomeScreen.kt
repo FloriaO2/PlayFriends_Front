@@ -648,7 +648,7 @@ fun HomeScreen(
                             }
                         }
                         Text(
-                            "Join Group 버튼을 누르고 이 초대코드를 입력하면 ${groupName} 그룹에 참여할 수 있습니다.\n초대코드는 그룹 창에서도 확인할 수 있습니다.",
+                            "Join Group 버튼을 누르고 이 초대코드를 입력하면 ${groupName} 그룹에 참여할 수 있습니다.\n각 그룹창에 있는 초대코드를 클릭하면 초대코드를 복사할 수 있습니다.",
                             fontSize = 14.sp,
                             color = Color.Gray,
                             modifier = Modifier.padding(top = 8.dp)
