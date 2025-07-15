@@ -28,7 +28,7 @@ class GroupRepository {
     }
     
     // 그룹 생성
-    suspend fun createGroup(groupCreate: GroupCreate): Result<GroupResponse> = withContext(Dispatchers.IO) {
+    suspend fun createGroup(groupCreate: GroupCreate): Result<GroupDetailResponse> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.createGroup(groupCreate)
             if (response.isSuccessful) {
@@ -47,7 +47,7 @@ class GroupRepository {
     }
     
     // 특정 그룹 조회
-    suspend fun getGroup(groupId: String): Result<GroupResponse> = withContext(Dispatchers.IO) {
+    suspend fun getGroup(groupId: String): Result<GroupDetailResponse> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.getGroup(groupId)
             if (response.isSuccessful) {
@@ -66,7 +66,7 @@ class GroupRepository {
     }
     
     // 그룹 수정
-    suspend fun updateGroup(groupId: String, groupUpdate: GroupUpdate): Result<GroupResponse> = withContext(Dispatchers.IO) {
+    suspend fun updateGroup(groupId: String, groupUpdate: GroupUpdate): Result<GroupDetailResponse> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.updateGroup(groupId, groupUpdate)
             if (response.isSuccessful) {
@@ -135,4 +135,46 @@ class GroupRepository {
             Result.failure(e)
         }
     }
-} 
+
+    // 카테고리 추천
+    suspend fun recommendCategories(groupId: String): Result<CategoryListResponse> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.recommendCategories(groupId)
+            if (response.isSuccessful) {
+                response.body()?.let { Result.success(it) } ?: Result.failure(Exception("카테고리 추천 응답 없음"))
+            } else {
+                Result.failure(Exception("서버 오류: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // 스케줄 제안 생성
+    suspend fun createSchedule(groupId: String, categories: Map<String, List<String>>): Result<ListScheduleResponse> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.createSchedule(groupId, categories)
+            if (response.isSuccessful) {
+                response.body()?.let { Result.success(it) } ?: Result.failure(Exception("스케줄 제안 응답 없음"))
+            } else {
+                Result.failure(Exception("서버 오류: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // 스케줄 확정
+    suspend fun confirmSchedule(scheduleInput: ScheduleSuggestionInput): Result<GroupDetailResponse> = withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.confirmSchedule(scheduleInput)
+            if (response.isSuccessful) {
+                response.body()?.let { Result.success(it) } ?: Result.failure(Exception("스케줄 확정 응답 없음"))
+            } else {
+                Result.failure(Exception("서버 오류: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}

@@ -28,9 +28,7 @@ interface ApiService {
     @GET("api/v1/users/{user_id}/groups")
     suspend fun getUserGroups(@Path("user_id") userId: String): Response<GroupList>
     
-    // 특정 사용자 정보 조회
-    @GET("api/v1/users/{user_id}")
-    suspend fun getUserById(@Path("user_id") userId: String): Response<User>
+    
 
     // 현재 사용자 정보 수정
     @PUT("api/v1/users/me")
@@ -48,18 +46,18 @@ interface ApiService {
     
     // 그룹 생성
     @POST("api/v1/groups/")
-    suspend fun createGroup(@Body groupCreate: GroupCreate): Response<GroupResponse>
+    suspend fun createGroup(@Body groupCreate: GroupCreate): Response<GroupDetailResponse>
     
     // 특정 그룹 조회
     @GET("api/v1/groups/{group_id}")
-    suspend fun getGroup(@Path("group_id") groupId: String): Response<GroupResponse>
+    suspend fun getGroup(@Path("group_id") groupId: String): Response<GroupDetailResponse>
     
     // 그룹 수정
     @PUT("api/v1/groups/{group_id}")
     suspend fun updateGroup(
         @Path("group_id") groupId: String,
         @Body groupUpdate: GroupUpdate
-    ): Response<GroupResponse>
+    ): Response<GroupDetailResponse>
     
     // 그룹 삭제
     @DELETE("api/v1/groups/{group_id}")
@@ -72,4 +70,21 @@ interface ApiService {
     // 그룹 탈퇴
     @DELETE("api/v1/groups/{group_id}/leave")
     suspend fun leaveGroup(@Path("group_id") groupId: String): Response<Message>
+
+    // ===== 스케줄 관련 API =====
+
+    // 카테고리 추천
+    @POST("api/v1/groups/{group_id}/recommend-categories")
+    suspend fun recommendCategories(@Path("group_id") groupId: String): Response<CategoryListResponse>
+
+    // 스케줄 제안 생성
+    @POST("api/v1/groups/{group_id}/schedules")
+    suspend fun createSchedule(
+        @Path("group_id") groupId: String,
+        @Body categories: Map<String, List<String>>
+    ): Response<ListScheduleResponse>
+
+    // 스케줄 확정
+    @POST("api/v1/groups/schedule")
+    suspend fun confirmSchedule(@Body scheduleInput: ScheduleSuggestionInput): Response<GroupDetailResponse>
 }

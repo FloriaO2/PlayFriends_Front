@@ -286,7 +286,7 @@ fun HomeScreen(
                     onGroupClick = {
                         // 상세정보가 열린 상태에서 한 번 더 클릭하면 GroupScreen으로 이동
                         if (expandedGroupId == group.id) {
-                            navController.navigate("group")
+                            navController.navigate("group/${group.id}")
                         }
                     },
                     cardBackground = cardBackground,
@@ -299,7 +299,7 @@ fun HomeScreen(
                         memberDialogLoading = true
                         showMemberDialog = true
                         memberNames = listOf()
-                        groupViewModel.getGroupDetail(group.id)
+                        groupViewModel.getGroup(group.id)
                     }
                 )
             }
@@ -756,27 +756,18 @@ fun HomeScreen(
             }
         }
 
-        // 그룹 상세 정보가 갱신되면 멤버 이름 리스트 비동기 수집
-        val groupDetail by groupViewModel.groupDetail.collectAsState()
-        LaunchedEffect(groupDetail) {
-            val detail = groupDetail
+        // 그룹 상세 정보가 갱신되면 멤버 이름 리스트 수집
+        LaunchedEffect(selectedGroup) {
+            val detail = selectedGroup
             if (showMemberDialog && detail != null) {
-                val ids = detail.member_ids
-                val names = mutableListOf<String>()
                 memberDialogLoading = true
-                ids.forEach { id ->
-                    userViewModel.getUserById(id) { user ->
-                        user?.let { names.add(it.username) }
-                        if (names.size == ids.size) {
-                            memberNames = names
-                            memberDialogLoading = false
-                        }
-                    }
+                // GroupDetailResponse에 포함된 members 리스트를 직접 사용
+                memberNames = if (detail.members.isNotEmpty()) {
+                    detail.members.map { it.name }
+                } else {
+                    listOf("멤버 없음")
                 }
-                if (ids.isEmpty()) {
-                    memberNames = listOf("멤버 없음")
-                    memberDialogLoading = false
-                }
+                memberDialogLoading = false
             }
         }
 
