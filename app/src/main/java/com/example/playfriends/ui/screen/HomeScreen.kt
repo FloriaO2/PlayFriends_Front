@@ -781,11 +781,6 @@ fun HomeScreen(
                         joinResultMessage = (joinGroupState as UserViewModel.JoinGroupState.Success).message
                         showJoinResultDialog = true
                         showJoinGroupDialog = false
-                        // 참여한 그룹명 추출 (userGroups에서 가장 최근 추가된 그룹명 사용)
-                        val latestGroup = userGroups.lastOrNull()
-                        joinedGroupName = latestGroup?.groupname ?: ""
-                        showJoinSuccessDialog = true
-                        // navController.navigate("home") { ... }는 팝업 확인 버튼에서 실행
                     }
                     is UserViewModel.JoinGroupState.Error -> {
                         joinResultMessage = (joinGroupState as UserViewModel.JoinGroupState.Error).message
@@ -829,40 +824,13 @@ fun HomeScreen(
                     } else {
                         Column {
                             memberNames.forEach { name ->
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = "Members",
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(name, fontSize = 16.sp)
-                                }
+                                Text(name, fontSize = 16.sp)
                             }
                         }
                     }
                 },
                 confirmButton = {
                     TextButton(onClick = { showMemberDialog = false }) {
-                        Text("확인")
-                    }
-                }
-            )
-        }
-        // 그룹 참여 성공 안내 팝업
-        if (showJoinSuccessDialog && joinedGroupName.isNotBlank()) {
-            AlertDialog(
-                onDismissRequest = { showJoinSuccessDialog = false },
-                title = { Text("그룹 참여 성공", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-                text = { Text("'${joinedGroupName}' 그룹에 성공적으로 참여했습니다.", fontSize = 16.sp) },
-                confirmButton = {
-                    Button(onClick = {
-                        showJoinSuccessDialog = false
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = true }
-                        }
-                    }) {
                         Text("확인")
                     }
                 }
