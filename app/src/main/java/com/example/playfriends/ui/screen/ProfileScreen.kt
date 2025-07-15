@@ -169,10 +169,10 @@ fun ProfileScreen(
             ) {
                 Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("취향 테스트 다시 보러 가기", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
+                Text("취향 테스트 다시 보러 가기", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black)
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(23.dp))
 
             // 취향 분석 레포트 타이틀
             Text(
@@ -185,7 +185,7 @@ fun ProfileScreen(
                 fontSize = 18.sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             // PlayPreferences를 이용한 육각형 그래프
             user?.play_preferences?.let {
@@ -238,7 +238,7 @@ fun ProfileScreen(
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(50.dp))
+
         }
 
 
