@@ -102,7 +102,7 @@ fun HomeScreen(
     // 팝업 관련 상태
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     var showJoinGroupDialog by remember { mutableStateOf(false) }
-    var showGroupCreatedDialog by remember { mutableStateOf(false) }
+    var showGroupCreatedDialog by remember { mutableStateOf<Boolean?>(null) }
     var groupName by remember { mutableStateOf("") }
     var groupId by remember { mutableStateOf("") }
     var showInputErrorDialog by remember { mutableStateOf(false) }
@@ -117,6 +117,8 @@ fun HomeScreen(
     val groupOperationState by groupViewModel.groupOperationState.collectAsState()
     val selectedGroup by groupViewModel.selectedGroup.collectAsState()
     var createdGroupId by remember { mutableStateOf("") }
+    // 그룹 생성 팝업을 특정 그룹에만 일시적으로 띄우기 위한 상태
+    var createdGroupIdForDialog by remember { mutableStateOf("") }
 
     // 추가: UserViewModel 선언 및 상태 수집
     val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
@@ -188,6 +190,11 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var navigateToHome by remember { mutableStateOf(false) }
+
+    // showGroupCreatedDialog 값이 변경될 때마다 로그 출력
+    LaunchedEffect(showGroupCreatedDialog) {
+        Log.d("HomeScreen", "showGroupCreatedDialog: $showGroupCreatedDialog")
+    }
 
     Scaffold(
         containerColor = backgroundColor,
@@ -298,6 +305,9 @@ fun HomeScreen(
                     onMemberClick = {
                         memberDialogLoading = true
                         showMemberDialog = true
+                        showGroupCreatedDialog = false // 팝업 강제 종료
+                        groupViewModel.resetOperationState() // 그룹 생성 성공 상태도 초기화
+                        Log.d("HomeScreen", "onMemberClick - showGroupCreatedDialog: $showGroupCreatedDialog")
                         memberNames = listOf()
                         groupViewModel.getGroup(group.id)
                     }
@@ -549,13 +559,22 @@ fun HomeScreen(
         }
 
         // 그룹 생성 완료 팝업
+        // 그룹 생성 성공 시에만 해당 그룹에 대해 팝업을 띄움
         LaunchedEffect(groupOperationState, selectedGroup) {
             val group = selectedGroup
-            if (groupOperationState is GroupViewModel.GroupOperationState.Success && group != null) {
+            if (groupOperationState is GroupViewModel.GroupOperationState.Success
+                && group != null
+                && (groupOperationState as GroupViewModel.GroupOperationState.Success).message == "그룹이 생성되었습니다"
+            ) {
                 createdGroupId = group._id
+                createdGroupIdForDialog = group._id // 반드시 동시에 세팅
+                if (showGroupCreatedDialog == null) {
+                    showGroupCreatedDialog = true // 최초 1회만 true
+                } else {
+                    showGroupCreatedDialog = false // 그 뒤로는 무조건 false
+                }
                 groupName = group.groupname // 생성된 그룹 이름을 저장
-                showGroupCreatedDialog = true
-                // showCreateGroupDialog = false // 필요시 생성 팝업 닫기
+                groupViewModel.resetOperationState() // Success 상태 즉시 초기화
             }
         }
         if (groupOperationState is GroupViewModel.GroupOperationState.Error) {
@@ -571,7 +590,7 @@ fun HomeScreen(
                 }
             )
         }
-        if (showGroupCreatedDialog) {
+        if (showGroupCreatedDialog == true) {
             val clipboardManager = LocalClipboardManager.current
             AlertDialog(
                 onDismissRequest = { showGroupCreatedDialog = false },
@@ -620,6 +639,8 @@ fun HomeScreen(
                     Button(
                         onClick = {
                             showGroupCreatedDialog = false
+                            createdGroupIdForDialog = ""
+                            groupViewModel.resetOperationState()
                             navigateToHome = true
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57))
