@@ -48,8 +48,24 @@ fun NavGraph(
                 GroupScreen(navController = navController, groupId = groupId)
             }
         }
-        composable("groupPlan") {
-            GroupPlanScreen(navController = navController)
+        composable(
+            "groupPlan/{groupId}?categories={categories}",
+            arguments = listOf(
+                navArgument("groupId") { type = NavType.StringType },
+                navArgument("categories") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId")
+            val categoriesString = backStackEntry.arguments?.getString("categories")
+            val categories = categoriesString?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+
+            if (groupId != null) {
+                GroupPlanScreen(
+                    navController = navController,
+                    groupId = groupId,
+                    categories = categories
+                )
+            }
         }
         composable("profile") {
             ProfileScreen(

@@ -237,9 +237,9 @@ fun GroupScreen(
                             onCheckedChange = { newStates -> checkedStates = newStates },
                             onEditClick = { showPopup = true },
                             onRecommendClick = {
-                                val selected = checkedStates.filter { it.value }.keys.toList()
-                                groupViewModel.createScheduleSuggestions(currentGroup._id, selected)
-                                navController.navigate("groupPlan")
+                                val selectedCategories = checkedStates.filter { it.value }.keys.toList()
+                                val categoriesString = selectedCategories.joinToString(",")
+                                navController.navigate("groupPlan/${currentGroup._id}?categories=$categoriesString")
                             },
                             showPopup = showPopup,
                             onDismissPopup = { showPopup = false },

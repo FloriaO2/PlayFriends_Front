@@ -188,6 +188,10 @@ class GroupViewModel : ViewModel() {
         _groupOperationState.value = GroupOperationState.Idle
     }
 
+    fun clearScheduleSuggestions() {
+        _scheduleSuggestions.value = emptyList()
+    }
+
     // 카테고리 추천
     fun recommendCategories(groupId: String) {
         viewModelScope.launch {
@@ -209,7 +213,10 @@ class GroupViewModel : ViewModel() {
     fun createScheduleSuggestions(groupId: String, categories: List<String>) {
         viewModelScope.launch {
             _groupOperationState.value = GroupOperationState.Loading
-            val result = groupRepository.createSchedule(groupId, mapOf("categories" to categories))
+            Log.d("GroupViewModel", "요청중...")
+            val scheduleRequest = ScheduleRequest(categories)
+            val result = groupRepository.createSchedule(groupId, scheduleRequest)
+            Log.d("GroupViewModel", "요청완료...$result")
             result.fold(
                 onSuccess = { response ->
                     _scheduleSuggestions.value = response.schedules

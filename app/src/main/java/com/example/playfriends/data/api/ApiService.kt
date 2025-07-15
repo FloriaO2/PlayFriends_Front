@@ -81,7 +81,7 @@ interface ApiService {
     @POST("api/v1/groups/{group_id}/schedules")
     suspend fun createSchedule(
         @Path("group_id") groupId: String,
-        @Body categories: Map<String, List<String>>
+        @Body categories: ScheduleRequest
     ): Response<ListScheduleResponse>
 
     // 스케줄 확정
