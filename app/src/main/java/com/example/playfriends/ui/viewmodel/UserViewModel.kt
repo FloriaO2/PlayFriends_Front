@@ -25,8 +25,8 @@ class UserViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     
-    private val _userGroups = MutableStateFlow<List<GroupResponse>>(emptyList())
-    val userGroups: StateFlow<List<GroupResponse>> = _userGroups.asStateFlow()
+    private val _userGroups = MutableStateFlow<List<GroupDetailResponse>>(emptyList())
+    val userGroups: StateFlow<List<GroupDetailResponse>> = _userGroups.asStateFlow()
     
     // 그룹 참여 상태
     private val _joinGroupState = MutableStateFlow<JoinGroupState>(JoinGroupState.Idle)
@@ -183,16 +183,6 @@ class UserViewModel : ViewModel() {
     // 에러 메시지 설정
     fun setError(message: String) {
         _loginState.value = LoginState.Error(message)
-    }
-
-    fun getUserById(userId: String, onResult: (User?) -> Unit) {
-        viewModelScope.launch {
-            val result = userRepository.getUserById(userId)
-            result.fold(
-                onSuccess = { user -> onResult(user) },
-                onFailure = { onResult(null) }
-            )
-        }
     }
 
     // 사용자 정보 수정

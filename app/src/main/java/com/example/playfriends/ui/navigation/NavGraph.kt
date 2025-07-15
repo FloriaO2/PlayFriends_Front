@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.playfriends.ui.screen.HomeScreen
 import com.example.playfriends.ui.screen.LoginScreen
 import com.example.playfriends.ui.screen.GroupScreen
@@ -34,8 +36,14 @@ fun NavGraph(navController: NavHostController) {
                 onLogout = authState.onLogout
             )
         }
-        composable("group") {
-            GroupScreen(navController = navController)
+        composable(
+            "group/{groupId}",
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId")
+            if (groupId != null) {
+                GroupScreen(navController = navController, groupId = groupId)
+            }
         }
         composable("groupPlan") {
             GroupPlanScreen(navController = navController)
@@ -51,4 +59,3 @@ fun NavGraph(navController: NavHostController) {
         }
     }
 }
-

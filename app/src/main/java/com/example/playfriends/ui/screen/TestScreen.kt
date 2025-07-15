@@ -1,5 +1,6 @@
 package com.example.playfriends.ui.screen
 
+import android.util.Log
 import kotlin.math.roundToInt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,6 +48,7 @@ fun TestScreen(
 
     // 사용자 데이터가 로드되면 상태 맵을 업데이트합니다.
     LaunchedEffect(user) {
+        Log.d("", "user: ${user}")
         user?.let { currentUser ->
             // Food Preferences 업데이트
             foodPreferences.clear()

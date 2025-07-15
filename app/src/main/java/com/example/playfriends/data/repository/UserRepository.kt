@@ -231,17 +231,5 @@ class UserRepository {
         }
     }
 
-    suspend fun getUserById(userId: String): Result<User> = withContext(Dispatchers.IO) {
-        val response = apiService.getUserById(userId)
-        if (response.isSuccessful) {
-            val user = response.body()
-            if (user != null) {
-                Result.success(user)
-            } else {
-                Result.failure(Exception("사용자 정보가 없습니다."))
-            }
-        } else {
-            Result.failure(Exception(response.errorBody()?.string() ?: "사용자 정보 조회 실패"))
-        }
-    }
+    
 }
