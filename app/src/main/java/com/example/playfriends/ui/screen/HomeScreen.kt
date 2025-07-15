@@ -83,8 +83,7 @@ fun Context.findActivity(): Activity? = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    navController: NavController,
-    onLogout: () -> Unit = {}
+    navController: NavController
 ) {
     val context = LocalContext.current
     val activity = context.findActivity() as? ComponentActivity

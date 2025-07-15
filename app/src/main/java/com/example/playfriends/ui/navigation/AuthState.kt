@@ -1,59 +1,40 @@
 package com.example.playfriends.ui.navigation
 
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.playfriends.data.api.TokenManager
-import kotlinx.coroutines.delay
+import com.example.playfriends.ui.screen.findActivity
+import com.example.playfriends.ui.viewmodel.UserViewModel
 
 @Composable
-fun rememberAuthState(navController: NavController): AuthState {
-    var isAuthenticated by remember { mutableStateOf<Boolean?>(null) }
-    
-    LaunchedEffect(Unit) {
-        // 토큰 존재 여부 확인
-        val hasToken = TokenManager.hasToken()
-        isAuthenticated = hasToken
-        
-        if (hasToken) {
-            // 토큰이 있으면 홈 화면으로 이동
+fun rememberAuthState(navController: NavController) {
+    val context = LocalContext.current
+    val activity = context.findActivity() as? ComponentActivity
+    requireNotNull(activity) { "Activity를 찾을 수 없습니다." }
+    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
+    val user by userViewModel.user.collectAsState()
+    val loginState by userViewModel.loginState.collectAsState()
+
+    LaunchedEffect(user, loginState) {
+        if (loginState is UserViewModel.LoginState.Success || (user != null && loginState !is UserViewModel.LoginState.Idle)) {
             navController.navigate("home") {
                 popUpTo("splash") { inclusive = true }
+                launchSingleTop = true
             }
-        } else {
-            // 토큰이 없으면 로그인 화면으로 이동
+        } else if (user == null && loginState is UserViewModel.LoginState.Idle) {
             navController.navigate("login") {
                 popUpTo("splash") { inclusive = true }
+                launchSingleTop = true
             }
         }
     }
-    
-    return remember {
-        AuthState(
-            isAuthenticated = isAuthenticated,
-            onLoginSuccess = {
-                isAuthenticated = true
-                navController.navigate("home") {
-                    popUpTo("splash") { inclusive = true }
-                }
-            },
-            onLogout = {
-                isAuthenticated = false
-                TokenManager.clearToken()
-                navController.navigate("login") {
-                    popUpTo("splash") { inclusive = true }
-                }
-            }
-        )
+
+    LaunchedEffect(Unit) {
+        userViewModel.getCurrentUser()
     }
 }
-
-data class AuthState(
-    val isAuthenticated: Boolean?,
-    val onLoginSuccess: () -> Unit,
-    val onLogout: () -> Unit
-) 

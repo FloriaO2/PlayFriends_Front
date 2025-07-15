@@ -29,7 +29,8 @@ import androidx.navigation.NavController
 import com.example.playfriends.ui.component.AppTopBar
 import com.example.playfriends.ui.component.HexagonGraph
 import kotlinx.coroutines.launch
-
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.playfriends.ui.viewmodel.UserViewModel
 
@@ -39,6 +40,12 @@ fun ProfileScreen(
     userViewModel: UserViewModel = viewModel(),
     onLogout: () -> Unit
 ) {
+    val context = LocalContext.current
+    val activity = context.findActivity() as? ComponentActivity
+    requireNotNull(activity) { "Activity를 찾을 수 없습니다." }
+    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
+    val user by userViewModel.user.collectAsState()
+
     val bgColor = Color(0xFFF1FFF4)
     val tagColor = Color(0xFFECECEC)
 
@@ -115,6 +122,7 @@ fun ProfileScreen(
 
                     Text(
                         "아이디 : ${user?.userid ?: "로딩 중..."}",
+
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xA9000000)
@@ -159,7 +167,7 @@ fun ProfileScreen(
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = Color(0xFF228B22), fontWeight = FontWeight.Bold)) {
-                        append("[${user?.userid ?: ""}]")
+                        append("[${user?.username ?: "고객"}]")
                     }
                     append("님을 위한 취향 분석 레포트")
                 },
