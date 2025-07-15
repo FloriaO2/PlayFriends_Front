@@ -13,19 +13,32 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.playfriends.data.model.ScheduleSuggestionOutput
+import com.example.playfriends.data.model.ScheduledActivity
 import com.example.playfriends.ui.component.AppTopBar
-
-data class PlanItem(val time: String, val label: String, val moveType: String = "", val moveTime: String = "")
+import com.example.playfriends.ui.viewmodel.GroupViewModel
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun GroupPlanScreen(navController: NavController) {
+fun GroupPlanScreen(
+    navController: NavController,
+    groupId: String,
+    categories: List<String>,
+    groupViewModel: GroupViewModel = viewModel()
+) {
     val backgroundColor = Color(0xFFF1FFF4)
     val cardColor = Color(0xFFFAFFFA)
     val titleColor = Color(0xFF228B22)
@@ -34,13 +47,17 @@ fun GroupPlanScreen(navController: NavController) {
     val moveSubwayColor = Color(0xFFC9EDD8)
     val scrollState = rememberScrollState()
 
-    val plans = listOf("계획 1", "계획 2", "계획 3", "계획 4")
-    val timeline = listOf(
-        PlanItem("14:30 - 15:30", "운동", "도보", "7분"),
-        PlanItem("15:40 - 16:40", "카페", "지하철", "3분"),
-        PlanItem("16:50 - 19:30", "공연", "도보", "10분"),
-        PlanItem("19:40 - 22:00", "쇼핑")
-    )
+    val selectedGroup by groupViewModel.selectedGroup.collectAsState()
+    val scheduleSuggestions by groupViewModel.scheduleSuggestions.collectAsState()
+    val groupOperationState by groupViewModel.groupOperationState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        groupViewModel.clearScheduleSuggestions()
+        groupViewModel.getGroup(groupId)
+        if (categories.isNotEmpty()) {
+            groupViewModel.createScheduleSuggestions(groupId, categories)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -62,22 +79,27 @@ fun GroupPlanScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // 그룹명 + 그룹코드 + 시간/위치
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal=20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(horizontalAlignment = Alignment.Start) {
-                    Text("그룹 1", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
-                    Text("GROUP_1234", fontSize = 12.sp, color = Color.Gray)
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("25/06/20 14:30 - 22:00", fontSize = 16.sp, color = Color.Black)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("강남", fontSize = 16.sp)
+            selectedGroup?.let { group ->
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal=20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Text(group.groupname, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
+                        Text(group._id, fontSize = 12.sp, color = Color.Gray)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        val formatter = DateTimeFormatter.ofPattern("yy/MM/dd HH:mm")
+                        val startTime = LocalDateTime.parse(group.starttime).format(formatter)
+                        val endTime = group.endtime?.let { LocalDateTime.parse(it).format(formatter) } ?: ""
+                        Text("$startTime - $endTime", fontSize = 16.sp, color = Color.Black)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("대전", fontSize = 16.sp) // 위치 정보는 아직 모델에 없습니다.
+                        }
                     }
                 }
             }
@@ -101,7 +123,8 @@ fun GroupPlanScreen(navController: NavController) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Person, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("그룹 생성자 이름", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            val ownerName = selectedGroup?.members?.find { it.id == selectedGroup?.owner_id }?.name ?: "Unknown"
+                            Text(ownerName, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         }
                         IconButton(
                             onClick = { /* TODO: 그룹 나가기 로직 */ }
@@ -118,12 +141,7 @@ fun GroupPlanScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     // 참여자들 (2열로 표시)
-                    val participants = listOf(
-                        "참여자 1", "참여자 2", "참여자 3", "참여자 4", "참여자 5",
-                        "참여자 6", "참여자 7", "참여자 8", "참여자 9", "참여자 10"
-                    )
-
-                    participants.chunked(2).forEach { rowMembers ->
+                    selectedGroup?.members?.chunked(2)?.forEach { rowMembers ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -135,7 +153,7 @@ fun GroupPlanScreen(navController: NavController) {
                                 ) {
                                     Icon(Icons.Default.Person, contentDescription = null)
                                     Spacer(modifier = Modifier.width(8.dp))
-                                    Text(member, fontSize = 16.sp)
+                                    Text(member.name, fontSize = 16.sp)
                                 }
                             }
                             // 홀수 개일 때 두 번째 열을 빈 공간으로 채움
@@ -158,25 +176,37 @@ fun GroupPlanScreen(navController: NavController) {
                     .background(Color(0xFFE0E0E0))
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // 계획 카드들
-            LazyVerticalGrid(
+            // 로딩 인디케이터 또는 계획 카드
+            if (groupOperationState is GroupViewModel.GroupOperationState.Loading) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                // 계획 카드들
+                LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.heightIn(max = 1500.dp),
                 contentPadding = PaddingValues(bottom = 24.dp)
-            ) {
-                items(plans) { title ->
-                    PlanCard(
-                        planTitle = title, 
-                        timeline = timeline,
-                        chipColor = chipColor,
-                        moveWalkColor = moveWalkColor,
-                        moveSubwayColor = moveSubwayColor,
-                        navController = navController
-                    )
+                ) {
+                    items(scheduleSuggestions.size) { index ->
+                        val suggestion = scheduleSuggestions[index]
+                        PlanCard(
+                            planTitle = "계획 ${index + 1}",
+                            suggestion = suggestion,
+                            chipColor = chipColor,
+                            moveWalkColor = moveWalkColor,
+                            moveSubwayColor = moveSubwayColor,
+                            navController = navController,
+                            groupViewModel = groupViewModel
+                        )
+                    }
                 }
             }
 
@@ -187,12 +217,13 @@ fun GroupPlanScreen(navController: NavController) {
 
 @Composable
 fun PlanCard(
-    planTitle: String, 
-    timeline: List<PlanItem>,
+    planTitle: String,
+    suggestion: ScheduleSuggestionOutput,
     chipColor: Color,
     moveWalkColor: Color,
     moveSubwayColor: Color,
-    navController: NavController
+    navController: NavController,
+    groupViewModel: GroupViewModel
 ) {
     val cardColor = Color(0xFFFAFFFA)
 
@@ -226,7 +257,7 @@ fun PlanCard(
             // 세로 배치 타임라인
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                 VerticalScheduleTimeline(
-                    timeline = timeline,
+                    timeline = suggestion.scheduled_activities,
                     chipColor = chipColor,
                     moveWalkColor = moveWalkColor,
                     moveSubwayColor = moveSubwayColor
@@ -237,10 +268,8 @@ fun PlanCard(
 
             Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                 Button(
-                    onClick = { 
-                        // TODO: 여기에 확정하기 관련 로직 추가
-                        // 예: 계획 확정 처리, 데이터베이스 저장 등
-                        
+                    onClick = {
+                        groupViewModel.confirmSchedule(suggestion)
                         // GroupScreen으로 돌아가기
                         navController.navigate("group") {
                             popUpTo("groupPlan") { inclusive = true }
@@ -259,7 +288,7 @@ fun PlanCard(
 
 @Composable
 fun VerticalScheduleTimeline(
-    timeline: List<PlanItem>,
+    timeline: List<ScheduledActivity>,
     chipColor: Color,
     moveWalkColor: Color,
     moveSubwayColor: Color
@@ -334,8 +363,12 @@ fun VerticalScheduleTimeline(
                                 .offset(x = timelineX + 24.dp)
                                 .width(textWidth + iconSize + iconTextSpacing)
                         ) {
+                            val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                            val startTime = LocalDateTime.parse(item.start_time).format(formatter)
+                            val endTime = LocalDateTime.parse(item.end_time).format(formatter)
+
                             Text(
-                                text = when (item.label) {
+                                text = when (item.category) {
                                     "운동" -> "🏀"
                                     "카페" -> "☕"
                                     "공연" -> "🎵"
@@ -348,11 +381,18 @@ fun VerticalScheduleTimeline(
                                 fontSize = 16.sp
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = item.label,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            Column {
+                                Text(
+                                    text = item.name,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "$startTime - $endTime",
+                                    fontSize = 12.sp,
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
                 }
