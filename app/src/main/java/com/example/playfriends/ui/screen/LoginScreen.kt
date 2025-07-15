@@ -27,14 +27,21 @@ import androidx.navigation.NavController
 import com.example.playfriends.R
 import com.example.playfriends.ui.viewmodel.UserViewModel
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
+import com.example.playfriends.ui.screen.findActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     navController: NavController,
-    onLoginSuccess: () -> Unit = {},
-    userViewModel: UserViewModel = viewModel()
+    onLoginSuccess: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val activity = context.findActivity() as? ComponentActivity
+    requireNotNull(activity) { "Activity를 찾을 수 없습니다." }
+    val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
+
     var isSignUp by remember { mutableStateOf(false) }
     var step by remember { mutableStateOf(1) }
 
