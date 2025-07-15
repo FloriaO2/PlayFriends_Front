@@ -211,7 +211,11 @@ class UserViewModel : ViewModel() {
     }
 
     // 선호도 수정
-    fun updatePreferences(foodPreferences: FoodPreferences, playPreferences: PlayPreferences) {
+    fun updatePreferences(
+        foodPreferences: FoodPreferences,
+        playPreferences: PlayPreferences,
+        onSuccess: (() -> Unit)? = null
+    ) {
         viewModelScope.launch {
             val preferencesUpdate = PreferencesUpdate(
                 food_preferences = foodPreferences,
@@ -223,6 +227,7 @@ class UserViewModel : ViewModel() {
                     // 성공 시 사용자 정보 다시 로드하여 UI 갱신
                     getCurrentUser()
                     Log.d("UserViewModel", "선호도 업데이트 성공")
+                    onSuccess?.invoke()
                 },
                 onFailure = { exception ->
                     Log.e("UserViewModel", "선호도 업데이트 실패: ${exception.message}")

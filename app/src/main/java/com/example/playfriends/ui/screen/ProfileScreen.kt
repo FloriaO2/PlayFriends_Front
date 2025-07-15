@@ -33,6 +33,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.playfriends.ui.viewmodel.UserViewModel
+import kotlin.random.Random
 
 @Composable
 fun ProfileScreen(
@@ -187,11 +188,37 @@ fun ProfileScreen(
 
             // 성향 분석 결과 텍스트
             Text("취향 분석 결과,", fontSize = 16.sp)
+            // 칭호 계산
+            val play = user?.play_preferences
+            val title = remember(play) {
+                if (play == null) "-" else {
+                    val map = mapOf(
+                        "도파민" to play.vibe_level,
+                        "붐빔" to play.crowd_level,
+                        "활동성" to play.activeness_level,
+                        "유행" to play.trend_level,
+                        "계획성" to play.planning_level,
+                        "실내" to play.location_preference
+                    )
+                    val max = map.values.maxOrNull() ?: 0f
+                    val maxTypes = map.filter { it.value == max }.keys.toList()
+                    val selected = maxTypes.random()
+                    when (selected) {
+                        "도파민" -> "스릴 헌터"
+                        "붐빔" -> "인간 칵테일"
+                        "활동성" -> "용감한 모험가"
+                        "유행" -> "앞서가는 선구자"
+                        "계획성" -> "전략의 귀재"
+                        "실내" -> "고요한 사색가"
+                        else -> "-"
+                    }
+                }
+            }
             Text(
                 buildAnnotatedString {
                     append("당신은 ")
                     withStyle(SpanStyle(color = Color(0xFF7EA86A), fontWeight = FontWeight.Bold)) {
-                        append("용감한 모험가")
+                        append(title)
                     }
                     append("입니다.")
                 },
@@ -240,7 +267,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
         }
-        
 
-        }
+
     }
+}

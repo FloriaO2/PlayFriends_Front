@@ -89,18 +89,8 @@ fun TestScreen(
             // 좌측: 다음에 하기 버튼
             Button(
                 onClick = {
-                    // 현재 스택을 확인하여 어디서 왔는지 판단
-                    if (navController.previousBackStackEntry?.destination?.route == "login") {
-                        // 회원가입에서 온 경우 홈으로 이동
-                        navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    } else {
-                        // ProfileScreen에서 온 경우 ProfileScreen으로 돌아가기
-                        navController.navigate("profile") {
-                            popUpTo("test") { inclusive = true }
-                        }
-                    }
+                    // 무조건 ProfileScreen으로 이동 (popUpTo 제거)
+                    navController.navigate("profile")
                 },
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -136,7 +126,6 @@ fun TestScreen(
             // 우측: 완료 버튼
             Button(
                 onClick = {
-                    // 1. FoodPreferences 객체 생성
                     val foodPrefs = FoodPreferences(
                         ingredients = foodPreferences.filterKeys { it.startsWith("재료_") }.map { (key, value) ->
                             IngredientPreference(FoodIngredient.valueOf(key.substringAfter("재료_")), value.toFloat())
@@ -153,7 +142,6 @@ fun TestScreen(
                         }
                     )
 
-                    // 2. PlayPreferences 객체 생성
                     val playPrefs = PlayPreferences(
                         crowd_level = contentSliderValues["붐비는 정도"] ?: 0f,
                         activeness_level = contentSliderValues["활동성"] ?: 0f,
@@ -163,11 +151,10 @@ fun TestScreen(
                         vibe_level = contentSliderValues["분위기"] ?: 0f
                     )
 
-                    // 3. ViewModel 함수 호출
-                    userViewModel.updatePreferences(foodPrefs, playPrefs)
-
-                    // 4. 이전 화면으로 돌아가기
-                    navController.popBackStack()
+                    // updatePreferences에 콜백 전달: 성공 시에만 이동 (popUpTo 제거)
+                    userViewModel.updatePreferences(foodPrefs, playPrefs) {
+                        navController.navigate("profile")
+                    }
                 },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
