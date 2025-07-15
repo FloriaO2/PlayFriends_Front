@@ -102,7 +102,7 @@ fun HomeScreen(
     // 팝업 관련 상태
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     var showJoinGroupDialog by remember { mutableStateOf(false) }
-    var showGroupCreatedDialog by remember { mutableStateOf(false) }
+    var showGroupCreatedDialog by remember { mutableStateOf<Boolean?>(null) }
     var groupName by remember { mutableStateOf("") }
     var groupId by remember { mutableStateOf("") }
     var showInputErrorDialog by remember { mutableStateOf(false) }
@@ -117,6 +117,8 @@ fun HomeScreen(
     val groupOperationState by groupViewModel.groupOperationState.collectAsState()
     val selectedGroup by groupViewModel.selectedGroup.collectAsState()
     var createdGroupId by remember { mutableStateOf("") }
+    // 그룹 생성 팝업을 특정 그룹에만 일시적으로 띄우기 위한 상태
+    var createdGroupIdForDialog by remember { mutableStateOf("") }
 
     // 추가: UserViewModel 선언 및 상태 수집
     val userViewModel: UserViewModel = viewModel(viewModelStoreOwner = activity)
@@ -188,6 +190,11 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var navigateToHome by remember { mutableStateOf(false) }
+
+    // showGroupCreatedDialog 값이 변경될 때마다 로그 출력
+    LaunchedEffect(showGroupCreatedDialog) {
+        Log.d("HomeScreen", "showGroupCreatedDialog: $showGroupCreatedDialog")
+    }
 
     Scaffold(
         containerColor = backgroundColor,
@@ -276,32 +283,47 @@ fun HomeScreen(
 
             // 그룹 데이터 정의
             // 그룹 카드들 렌더링
-            groups.forEach { group ->
-                AccordionGroupCard(
-                    group = group,
-                    isExpanded = expandedGroupId == group.id,
-                    onToggle = {
-                        expandedGroupId = if (expandedGroupId == group.id) null else group.id
-                    },
-                    onGroupClick = {
-                        // 상세정보가 열린 상태에서 한 번 더 클릭하면 GroupScreen으로 이동
-                        if (expandedGroupId == group.id) {
-                            navController.navigate("group/${group.id}")
+            if (groups.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                        .padding(top = 30.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "그룹 정보가 없습니다.\n\n하단의 + 버튼을 눌러\n지금 바로 그룹에 참여해보세요!",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                groups.forEach { group ->
+                    AccordionGroupCard(
+                        group = group,
+                        isExpanded = expandedGroupId == group.id,
+                        onToggle = {
+                            expandedGroupId = if (expandedGroupId == group.id) null else group.id
+                        },
+                        onGroupClick = {
+                            // 상세정보가 열린 상태에서 한 번 더 클릭하면 GroupScreen으로 이동
+                            if (expandedGroupId == group.id) {
+                                navController.navigate("group/${group.id}")
+                            }
+                        },
+                        cardBackground = cardBackground,
+                        titleColor = titleColor,
+                        chipColor = chipColor,
+                        moveWalkColor = moveWalkColor,
+                        moveSubwayColor = moveSubwayColor,
+                        onMemberClick = {
+                            memberDialogLoading = true
+                            showMemberDialog = true
+                            memberNames = listOf()
+                            groupViewModel.selectGroup(null) // 먼저 null로 초기화
+                            groupViewModel.getGroup(group.id)
                         }
-                    },
-                    cardBackground = cardBackground,
-                    titleColor = titleColor,
-                    chipColor = chipColor,
-                    moveWalkColor = moveWalkColor,
-                    moveSubwayColor = moveSubwayColor,
-                    // 멤버 아이콘 클릭 핸들러 추가
-                    onMemberClick = {
-                        memberDialogLoading = true
-                        showMemberDialog = true
-                        memberNames = listOf()
-                        groupViewModel.getGroup(group.id)
-                    }
-                )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(80.dp))
@@ -549,13 +571,20 @@ fun HomeScreen(
         }
 
         // 그룹 생성 완료 팝업
+        // 그룹 생성 성공 시에만 해당 그룹에 대해 팝업을 띄움
         LaunchedEffect(groupOperationState, selectedGroup) {
             val group = selectedGroup
-            if (groupOperationState is GroupViewModel.GroupOperationState.Success && group != null) {
+            if (groupOperationState is GroupViewModel.GroupOperationState.Success
+                && group != null
+                && (groupOperationState as GroupViewModel.GroupOperationState.Success).message == "그룹이 생성되었습니다"
+                && showGroupCreatedDialog == null
+            ) {
                 createdGroupId = group._id
-                groupName = group.groupname // 생성된 그룹 이름을 저장
+                createdGroupIdForDialog = group._id
                 showGroupCreatedDialog = true
-                // showCreateGroupDialog = false // 필요시 생성 팝업 닫기
+                groupName = group.groupname // 생성된 그룹 이름을 저장
+                groupViewModel.resetOperationState()
+                groupViewModel.selectGroup(null) // selectedGroup도 초기화
             }
         }
         if (groupOperationState is GroupViewModel.GroupOperationState.Error) {
@@ -571,10 +600,15 @@ fun HomeScreen(
                 }
             )
         }
-        if (showGroupCreatedDialog) {
+        if (showGroupCreatedDialog == true) {
             val clipboardManager = LocalClipboardManager.current
             AlertDialog(
-                onDismissRequest = { showGroupCreatedDialog = false },
+                onDismissRequest = {
+                    showGroupCreatedDialog = false
+                    createdGroupId = ""
+                    groupViewModel.resetOperationState()
+                    groupViewModel.selectGroup(null)
+                },
                 title = {
                     Text(
                         "그룹이 생성되었습니다!",
@@ -620,6 +654,9 @@ fun HomeScreen(
                     Button(
                         onClick = {
                             showGroupCreatedDialog = false
+                            createdGroupId = ""
+                            groupViewModel.resetOperationState()
+                            groupViewModel.selectGroup(null)
                             navigateToHome = true
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4C6A57))
