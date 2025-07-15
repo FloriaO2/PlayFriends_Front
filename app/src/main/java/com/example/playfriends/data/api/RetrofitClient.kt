@@ -44,7 +44,7 @@ object RetrofitClient {
             "http://10.0.2.2:8000/"
         } else {
             // 실제 기기일 때는 192.249.27.32 사용
-            "http://192.249.27.32:8000/"
+            "https://playfriends-backend-432865170811.us-central1.run.app/"
         }
         
         Log.d("RetrofitClient", "선택된 BASE_URL: $baseUrl")

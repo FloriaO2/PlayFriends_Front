@@ -182,7 +182,7 @@ fun GroupScreen(
                 .verticalScroll(scrollState)
                 .padding(start = 30.dp, end = 30.dp, top = 10.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(11.dp))
 
             // 그룹명/날짜 + 초대코드/위치 (2줄로 분리, 양끝 배치)
             Column(
@@ -251,7 +251,7 @@ fun GroupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(15.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // 참여자 카드
             group?.let { currentGroup ->
@@ -299,7 +299,7 @@ fun GroupScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(35.dp))
             Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0E0E0)))
             Spacer(modifier = Modifier.height(20.dp))
 
