@@ -232,6 +232,7 @@ class UserViewModel : ViewModel() {
                 onFailure = { exception ->
                     Log.e("UserViewModel", "선호도 업데이트 실패: ${exception.message}")
                     // 에러 상태 처리 필요
+                    onSuccess?.invoke() // 실패해도 콜백 호출
                 }
             )
         }
