@@ -74,9 +74,9 @@ fun ProfileScreen(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(15.dp))
 
-            Text("Profile", fontSize = 32.sp, fontWeight = FontWeight.Black)
+            Text("Profile", fontSize = 28.sp, fontWeight = FontWeight.Black)
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -84,13 +84,13 @@ fun ProfileScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 32.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 좌측: 프로필 원형 아이콘
                 Box(
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(100.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF7E57C2)),
                     contentAlignment = Alignment.Center
@@ -111,23 +111,36 @@ fun ProfileScreen(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        "닉네임 : ${user?.username ?: "로딩 중..."}",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xA9000000)
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color(0xA9000000))) {
+                                append("닉네임: ")
+                            }
+                            withStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xA9000000))) {
+                                append(user?.username ?: "로딩 중...")
+                            }
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Unspecified
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        "아이디 : ${user?.userid ?: "로딩 중..."}",
-
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xA9000000)
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal, color = Color(0xA9000000))) {
+                                append("아이디: ")
+                            }
+                            withStyle(SpanStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xA9000000))) {
+                                append(user?.userid ?: "로딩 중...")
+                            }
+                        },
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Unspecified
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Box(
                         modifier = Modifier.clickable {
@@ -136,7 +149,7 @@ fun ProfileScreen(
                     ) {
                         Text(
                             "로그아웃",
-                            color = Color(0xFF8B0000),
+                            color = Color(0xFFB21111),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -152,7 +165,7 @@ fun ProfileScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA1D0A3)),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
+                    .height(35.dp)
             ) {
                 Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
@@ -225,47 +238,7 @@ fun ProfileScreen(
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center
             )
-
             Spacer(modifier = Modifier.height(50.dp))
-
-            // 추천 콘텐츠 카드
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text(
-                        "⭐ 놀이 콘텐츠 추천 ⭐",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    val tags = listOf("놀이공원", "방탈출 카페", "공방", "팝업")
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(tags) { tag ->
-                            Box(
-                                modifier = Modifier
-                                    .background(tagColor, RoundedCornerShape(50))
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Text(text = tag, fontSize = 14.sp)
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
 
 
