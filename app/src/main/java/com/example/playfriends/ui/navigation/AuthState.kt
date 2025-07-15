@@ -21,7 +21,7 @@ fun rememberAuthState(navController: NavController) {
     val loginState by userViewModel.loginState.collectAsState()
 
     LaunchedEffect(user, loginState) {
-        if (loginState is UserViewModel.LoginState.Success || (user != null && loginState !is UserViewModel.LoginState.Idle)) {
+        if (loginState is UserViewModel.LoginState.Success && navController.currentDestination?.route == "login") {
             navController.navigate("home") {
                 popUpTo("splash") { inclusive = true }
                 launchSingleTop = true
