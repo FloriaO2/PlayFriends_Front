@@ -98,7 +98,25 @@ fun HomeScreen(
     val moveSubwayColor = Color(0xFFC9EDD8)
 
     // 현재 열린 그룹을 추적하는 상태
-    var expandedGroupId by remember { mutableStateOf<String?>(null) }
+    // var expandedGroupId by remember { mutableStateOf<String?>(null) }
+    // 첫 번째 하얀 배경(종료되지 않은) 그룹 id를 찾는 함수
+    // fun getFirstActiveGroupId(groups: List<GroupData>): String? {
+    //     return groups.firstOrNull { group ->
+    //         group.endRaw?.let {
+    //             try {
+    //                 val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    //                 val endDate = inputFormat.parse(it)
+    //                 endDate == null || endDate.after(Date())
+    //             } catch (e: Exception) {
+    //                 true // 파싱 실패 시 활성화로 간주
+    //             }
+    //         } ?: true // endRaw가 없으면 활성화로 간주
+    //     }?.id
+    // }
+    // groups가 바뀔 때마다 자동으로 첫 번째 하얀 배경 그룹을 펼치기
+    // LaunchedEffect(groups) {
+    //     expandedGroupId = getFirstActiveGroupId(groups)
+    // }
 
     // 팝업 관련 상태
     var showCreateGroupDialog by remember { mutableStateOf(false) }
@@ -166,90 +184,120 @@ fun HomeScreen(
         }
     }
 
-    val groups = detailedGroups.map { group ->
-        // 서버에서 오는 날짜 포맷에 맞게 파싱
-        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-        val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
-        val start = try {
-            outputFormat.format(inputFormat.parse(group.starttime) ?: "")
-        } catch (e: Exception) { "" }
-        val end = try {
-            group.endtime?.let {
-                outputFormat.format(inputFormat.parse(it) ?: "")
-            } ?: ""
-        } catch (e: Exception) { "" }
-        val timeStr = if (end.isNotBlank()) "$start - $end" else start
-        Log.d("HomeScreen", "group: ${group.groupname}, start: $start, end: $end, time: $timeStr, rawStart: ${group.starttime}, rawEnd: ${group.endtime}")
-
-        // 확정된 스케줄이 있으면 실제 스케줄 사용, 없으면 빈 리스트
-        Log.d("HomeScreen", "group ${group.groupname}: schedule = ${group.schedule}")
-        Log.d("HomeScreen", "group ${group.groupname}: distances_km = ${group.distances_km}")
-        val activities = if (group.schedule != null && group.schedule.isNotEmpty()) {
-            Log.d("HomeScreen", "group ${group.groupname}: schedule size = ${group.schedule.size}")
-            group.schedule.mapIndexed { index, activity ->
-                Log.d("HomeScreen", "activity $index: name=${activity.name}, category=${activity.category}, start=${activity.start_time}, end=${activity.end_time}")
-                // 시간 포맷팅: HH:mm - HH:mm
-                val timeInputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                val timeOutputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-                val activityStart = try {
-                    timeOutputFormat.format(timeInputFormat.parse(activity.start_time) ?: "")
-                } catch (e: Exception) {
-                    Log.e("HomeScreen", "Error parsing start_time: ${activity.start_time}", e)
-                    ""
-                }
-                val activityEnd = try {
-                    timeOutputFormat.format(timeInputFormat.parse(activity.end_time) ?: "")
-                } catch (e: Exception) {
-                    Log.e("HomeScreen", "Error parsing end_time: ${activity.end_time}", e)
-                    ""
-                }
-                val timeStr = "$activityStart - $activityEnd"
-                Log.d("HomeScreen", "formatted time: $timeStr")
-
-                // 카테고리에 따른 이모지 매핑
-                val emoji = when (activity.category) {
-                    "운동" -> "🏀"
-                    "카페" -> "☕"
-                    "공연" -> "🎵"
-                    "쇼핑" -> "🛒"
-                    "점심" -> "🍜"
-                    "저녁" -> "🍖"
-                    "노래방" -> "🎤"
-                    "식당" -> "🍽️"
-                    "영화관" -> "🎬"
-                    "박물관" -> "🏛️"
-                    else -> "📍"
-                }
-
-                Triple(timeStr, activity.name, emoji)
+    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+    val groups = detailedGroups
+        .sortedBy { group ->
+            try {
+                inputFormat.parse(group.starttime)
+            } catch (e: Exception) {
+                null
             }
-        } else {
-            Log.d("HomeScreen", "group ${group.groupname}: no schedule or empty schedule")
-            // 스케줄이 없으면 빈 리스트
-            emptyList()
+        }
+        .map { group ->
+            // 서버에서 오는 날짜 포맷에 맞게 파싱
+            val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
+            val start = try {
+                outputFormat.format(inputFormat.parse(group.starttime) ?: "")
+            } catch (e: Exception) { "" }
+            val end = try {
+                group.endtime?.let {
+                    outputFormat.format(inputFormat.parse(it) ?: "")
+                } ?: ""
+            } catch (e: Exception) { "" }
+            val timeStr = if (end.isNotBlank()) "$start - $end" else start
+            Log.d("HomeScreen", "group: ${group.groupname}, start: $start, end: $end, time: $timeStr, rawStart: ${group.starttime}, rawEnd: ${group.endtime}")
+
+            // 확정된 스케줄이 있으면 실제 스케줄 사용, 없으면 빈 리스트
+            Log.d("HomeScreen", "group ${group.groupname}: schedule = ${group.schedule}")
+            Log.d("HomeScreen", "group ${group.groupname}: distances_km = ${group.distances_km}")
+            val activities = if (group.schedule != null && group.schedule.isNotEmpty()) {
+                Log.d("HomeScreen", "group ${group.groupname}: schedule size = ${group.schedule.size}")
+                group.schedule.mapIndexed { index, activity ->
+                    Log.d("HomeScreen", "activity $index: name=${activity.name}, category=${activity.category}, start=${activity.start_time}, end=${activity.end_time}")
+                    // 시간 포맷팅: HH:mm - HH:mm
+                    val timeInputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val timeOutputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                    val activityStart = try {
+                        timeOutputFormat.format(timeInputFormat.parse(activity.start_time) ?: "")
+                    } catch (e: Exception) {
+                        Log.e("HomeScreen", "Error parsing start_time: ${activity.start_time}", e)
+                        ""
+                    }
+                    val activityEnd = try {
+                        timeOutputFormat.format(timeInputFormat.parse(activity.end_time) ?: "")
+                    } catch (e: Exception) {
+                        Log.e("HomeScreen", "Error parsing end_time: ${activity.end_time}", e)
+                        ""
+                    }
+                    val timeStr = "$activityStart - $activityEnd"
+                    Log.d("HomeScreen", "formatted time: $timeStr")
+
+                    // 카테고리에 따른 이모지 매핑
+                    val emoji = when (activity.category) {
+                        "운동" -> "🏀"
+                        "카페" -> "☕"
+                        "공연" -> "🎵"
+                        "쇼핑" -> "🛒"
+                        "점심" -> "🍜"
+                        "저녁" -> "🍖"
+                        "노래방" -> "🎤"
+                        "식당" -> "🍽️"
+                        "영화관" -> "🎬"
+                        "박물관" -> "🏛️"
+                        else -> "📍"
+                    }
+
+                    Triple(timeStr, activity.name, emoji)
+                }
+            } else {
+                Log.d("HomeScreen", "group ${group.groupname}: no schedule or empty schedule")
+                // 스케줄이 없으면 빈 리스트
+                emptyList()
+            }
+
+            Log.d("HomeScreen", "group ${group.groupname}: activities size = ${activities.size}")
+
+            // 이동 거리 계산 - distances_km 사용
+            val moves = if (group.distances_km != null && group.distances_km.isNotEmpty()) {
+                group.distances_km.map { distance ->
+                    "${(distance * 1000).toInt()}m" // km를 m로 변환
+                }
+            } else {
+                emptyList()
+            }
+
+            Log.d("HomeScreen", "group ${group.groupname}: moves size = ${moves.size}")
+
+            GroupData(
+                id = group._id,
+                name = group.groupname,
+                time = timeStr,
+                location = "대전",
+                activities = activities,
+                moves = moves,
+                endRaw = group.endtime // 종료 시간 원본 전달
+            )
         }
 
-        Log.d("HomeScreen", "group ${group.groupname}: activities size = ${activities.size}")
+    // groups 선언 이후에만!
+    var expandedGroupId by remember { mutableStateOf<String?>(null) }
 
-        // 이동 거리 계산 - distances_km 사용
-        val moves = if (group.distances_km != null && group.distances_km.isNotEmpty()) {
-            group.distances_km.map { distance ->
-                "${(distance * 1000).toInt()}m" // km를 m로 변환
-            }
-        } else {
-            emptyList()
-        }
+    fun getFirstActiveGroupId(groups: List<GroupData>): String? {
+        return groups.firstOrNull { group ->
+            group.endRaw?.let {
+                try {
+                    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                    val endDate = inputFormat.parse(it)
+                    endDate == null || endDate.after(Date())
+                } catch (e: Exception) {
+                    true // 파싱 실패 시 활성화로 간주
+                }
+            } ?: true // endRaw가 없으면 활성화로 간주
+        }?.id
+    }
 
-        Log.d("HomeScreen", "group ${group.groupname}: moves size = ${moves.size}")
-
-        GroupData(
-            id = group._id,
-            name = group.groupname,
-            time = timeStr,
-            location = "대전",
-            activities = activities,
-            moves = moves
-        )
+    LaunchedEffect(groups) {
+        expandedGroupId = getFirstActiveGroupId(groups)
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -279,6 +327,18 @@ fun HomeScreen(
         Log.d("HomeScreen", "=== END GROUPS DEBUG ===")
     }
 
+    // expandedGroupId가 바뀔 때 해당 그룹카드로 스크롤
+    val listState = rememberLazyListState()
+    LaunchedEffect(expandedGroupId) {
+        expandedGroupId?.let { id ->
+            val index = groups.indexOfFirst { it.id == id }
+            if (index >= 0) {
+                // 카드가 화면 상단보다 80픽셀 더 아래에 오도록 조정
+                listState.animateScrollToItem(index, scrollOffset = 400)
+            }
+        }
+    }
+
     // 그룹 참여 성공 안내 팝업 상태 변수 선언
     var showJoinSuccessDialog by remember { mutableStateOf(false) }
     var joinedGroupName by remember { mutableStateOf("") }
@@ -288,8 +348,7 @@ fun HomeScreen(
         topBar = {
             AppTopBar(
                 onLogoClick = { navController.navigate("home") },
-                onProfileClick = { navController.navigate("profile") },
-                profileInitial = user?.username?.firstOrNull()?.toString() ?: ""
+                onProfileClick = { navController.navigate("profile") }
             )
         },
         floatingActionButton = {
@@ -360,45 +419,54 @@ fun HomeScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
+            state = listState,
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
                 .fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 그룹 데이터 정의
-            // 그룹 카드들 렌더링
+            item { Spacer(modifier = Modifier.height(16.dp)) }
             if (groups.isEmpty()) {
-                if (userGroups.isNotEmpty() && detailedGroups.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(top = 30.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "로딩중...",
-                            fontSize = 16.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(top = 30.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "그룹 정보가 없습니다.\n\n하단의 + 버튼을 눌러\n지금 바로 그룹에 참여해보세요!",
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
+                item {
+                    if (userGroups.isNotEmpty() && detailedGroups.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(top = 30.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "로딩중...",
+                                fontSize = 16.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(top = 30.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "그룹 정보가 없습니다.\n\n하단의 + 버튼을 눌러\n지금 바로 그룹에 참여해보세요!",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             } else {
-                groups.forEach { group ->
+                itemsIndexed(groups) { index, group ->
+                    // 종료 시간이 현재보다 과거인지 판별
+                    val isPast = group.endRaw?.let {
+                        try {
+                            val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                            val endDate = inputFormat.parse(it)
+                            endDate != null && endDate.before(Date())
+                        } catch (e: Exception) {
+                            false
+                        }
+                    } ?: false
                     AccordionGroupCard(
                         group = group,
                         isExpanded = expandedGroupId == group.id,
@@ -411,7 +479,7 @@ fun HomeScreen(
                                 navController.navigate("group/${group.id}")
                             }
                         },
-                        cardBackground = cardBackground,
+                        cardBackground = if (isPast) Color(0xFFE0E0E0) else cardBackground,
                         titleColor = titleColor,
                         chipColor = chipColor,
                         moveWalkColor = moveWalkColor,
@@ -426,8 +494,7 @@ fun HomeScreen(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(80.dp))
+            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
 
         // Create Group 팝업
@@ -976,7 +1043,8 @@ data class GroupData(
     val time: String,
     val location: String,
     val activities: List<Triple<String, String, String>>,
-    val moves: List<String>
+    val moves: List<String>,
+    val endRaw: String? // 종료 시간 원본 String 추가
 )
 
 @Composable
@@ -1042,6 +1110,8 @@ fun AccordionGroupCard(
                         )
                     }
                 }
+            } else {
+
             }
         }
     }
