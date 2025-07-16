@@ -371,17 +371,30 @@ fun HomeScreen(
             // 그룹 데이터 정의
             // 그룹 카드들 렌더링
             if (groups.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                        .padding(top = 30.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "그룹 정보가 없습니다.\n\n하단의 + 버튼을 눌러\n지금 바로 그룹에 참여해보세요!",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center
-                    )
+                if (userGroups.isNotEmpty() && detailedGroups.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(top = 30.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "로딩중...",
+                            fontSize = 16.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(top = 30.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "그룹 정보가 없습니다.\n\n하단의 + 버튼을 눌러\n지금 바로 그룹에 참여해보세요!",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             } else {
                 groups.forEach { group ->
@@ -659,11 +672,14 @@ fun HomeScreen(
 
         // 그룹 생성 완료 팝업
         // 그룹 생성 성공 시에만 해당 그룹에 대해 팝업을 띄움
-        LaunchedEffect(groupViewModel.groupOperationState, selectedGroup) {
+        // 1. groupOperationState 선언
+        val groupOperationState by groupViewModel.groupOperationState.collectAsState()
+        // 2. LaunchedEffect 등에서 groupViewModel.groupOperationState → groupOperationState로 변경
+        LaunchedEffect(groupOperationState, selectedGroup) {
             val group = selectedGroup
-            if (groupViewModel.groupOperationState is GroupViewModel.GroupOperationState.Success
+            if (groupOperationState is GroupViewModel.GroupOperationState.Success
                 && group != null
-                && (groupViewModel.groupOperationState as GroupViewModel.GroupOperationState.Success).message == "그룹이 생성되었습니다"
+                && (groupOperationState as GroupViewModel.GroupOperationState.Success).message == "그룹이 생성되었습니다"
                 && showGroupCreatedDialog == null
             ) {
                 createdGroupId = group._id
@@ -674,8 +690,8 @@ fun HomeScreen(
                 groupViewModel.selectGroup(null) // selectedGroup도 초기화
             }
         }
-        if (groupViewModel.groupOperationState is GroupViewModel.GroupOperationState.Error) {
-            val errorMsg = (groupViewModel.groupOperationState as GroupViewModel.GroupOperationState.Error).message
+        if (groupOperationState is GroupViewModel.GroupOperationState.Error) {
+            val errorMsg = (groupOperationState as GroupViewModel.GroupOperationState.Error).message
             AlertDialog(
                 onDismissRequest = { groupViewModel.resetOperationState() },
                 title = { Text("에러", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
@@ -1004,13 +1020,27 @@ fun AccordionGroupCard(
             // 상세 정보 (확장 시에만 표시)
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(16.dp))
-                ScheduleTimeline(
-                    activities = group.activities,
-                    moves = group.moves,
-                    moveColors = List(group.moves.size) { if (it % 2 == 0) moveWalkColor else moveSubwayColor },
-                    moveIcons = List(group.moves.size) { if (it % 2 == 0) "🚶" else "🚇" },
-                    chipColor = chipColor
-                )
+                if (group.activities.isNotEmpty()) {
+                    ScheduleTimeline(
+                        activities = group.activities,
+                        moves = group.moves,
+                        moveColors = List(group.moves.size) { if (it % 2 == 0) moveWalkColor else moveSubwayColor },
+                        moveIcons = List(group.moves.size) { if (it % 2 == 0) "🚶" else "🚇" },
+                        chipColor = chipColor
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "확정된 스케줄이 없습니다.",
+                            fontSize = 16.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
