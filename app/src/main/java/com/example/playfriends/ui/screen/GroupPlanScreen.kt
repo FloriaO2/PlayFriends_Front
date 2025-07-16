@@ -31,6 +31,12 @@ import com.example.playfriends.ui.viewmodel.GroupViewModel
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Locale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 
 @Composable
 fun GroupPlanScreen(
@@ -50,6 +56,9 @@ fun GroupPlanScreen(
     val selectedGroup by groupViewModel.selectedGroup.collectAsState()
     val scheduleSuggestions by groupViewModel.scheduleSuggestions.collectAsState()
     val groupOperationState by groupViewModel.groupOperationState.collectAsState()
+
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         groupViewModel.clearScheduleSuggestions()
@@ -74,109 +83,131 @@ fun GroupPlanScreen(
                 .padding(padding)
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp)
+                .padding(start = 30.dp, end = 30.dp, top = 10.dp)
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 그룹명 + 그룹코드 + 시간/위치
+            // 그룹명/날짜 + 초대코드/위치 (2줄로 분리, 양끝 배치)
             selectedGroup?.let { group ->
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(horizontal=20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.Start) {
-                        Text(group.groupname, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = titleColor)
-                        Text(group._id, fontSize = 12.sp, color = Color.Gray)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            group.groupname,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = titleColor
+                        )
+                        // 일정 포맷팅: 25/07/20 00:00 - 25/07/20 20:00
+                        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                        val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
+                        val start = try {
+                            outputFormat.format(inputFormat.parse(group.starttime) ?: "")
+                        } catch (e: Exception) { "" }
+                        val end = try {
+                            group.endtime?.let { outputFormat.format(inputFormat.parse(it) ?: "") } ?: ""
+                        } catch (e: Exception) { "" }
+                        val timeStr = if (end.isNotBlank()) "$start - $end" else start
+                        Text(
+                            timeStr,
+                            fontSize = 14.sp,
+                            color = Color.Black,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 12.dp)
+                        )
                     }
-                    Column(horizontalAlignment = Alignment.End) {
-                        val formatter = DateTimeFormatter.ofPattern("yy/MM/dd HH:mm")
-                        val startTime = LocalDateTime.parse(group.starttime).format(formatter)
-                        val endTime = group.endtime?.let { LocalDateTime.parse(it).format(formatter) } ?: ""
-                        Text("$startTime - $endTime", fontSize = 16.sp, color = Color.Black)
+                    // 하단: 초대코드 - 위치
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(group._id))
+                                Toast.makeText(context, "복사가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                            },
+                            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                            modifier = Modifier.height(IntrinsicSize.Min)
+                        ) {
+                            Text(group._id, fontSize = 12.sp, color = Color.Gray)
+                        }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("대전", fontSize = 16.sp) // 위치 정보는 아직 모델에 없습니다.
+                            Text("대전", fontSize = 16.sp)
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(15.dp))
 
-            // 참여자 카드
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = cardColor),
-                elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // 그룹 생성자와 나가기 버튼
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Person, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            val ownerName = selectedGroup?.members?.find { it.id == selectedGroup?.owner_id }?.name ?: "Unknown"
-                            Text(ownerName, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        }
-                        IconButton(
-                            onClick = { /* TODO: 그룹 나가기 로직 */ }
-                        ) {
-                            Icon(
-                                Icons.Default.ExitToApp,
-                                contentDescription = "나가기",
-                                tint = Color(0xFF942020),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // 참여자들 (2열로 표시)
-                    selectedGroup?.members?.chunked(2)?.forEach { rowMembers ->
+                // 참여자 카드
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = cardColor),
+                    elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            rowMembers.forEach { member ->
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Icon(Icons.Default.Person, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(member.name, fontSize = 16.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Person, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    (group.members.find { it.id == group.owner_id }?.name ?: "Unknown") + " (방장)",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
+                                Icon(Icons.Default.ExitToApp, contentDescription = "나가기", tint = Color(0xFF942020), modifier = Modifier.size(24.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        group.members.chunked(2).forEach { rowMembers ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                rowMembers.forEach { member ->
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                        Icon(Icons.Default.Person, contentDescription = null)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(member.name, fontSize = 16.sp)
+                                    }
+                                }
+                                if (rowMembers.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
                                 }
                             }
-                            // 홀수 개일 때 두 번째 열을 빈 공간으로 채움
-                            if (rowMembers.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
+
+                Spacer(modifier = Modifier.height(30.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0E0E0)))
+                Spacer(modifier = Modifier.height(20.dp))
             }
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // 가로줄
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color(0xFFE0E0E0))
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
 
             // 로딩 인디케이터 또는 계획 카드
             if (groupOperationState is GroupViewModel.GroupOperationState.Loading) {
@@ -189,11 +220,11 @@ fun GroupPlanScreen(
             } else {
                 // 계획 카드들
                 LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.heightIn(max = 1500.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.heightIn(max = 1500.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
                     items(scheduleSuggestions.size) { index ->
                         val suggestion = scheduleSuggestions[index]
@@ -243,17 +274,17 @@ fun PlanCard(
                     .padding(16.dp)
             ) {
                 Text(
-                    planTitle, 
-                    fontWeight = FontWeight.Bold, 
-                    fontSize = 22.sp, 
+                    planTitle,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
                     color = Color(0xA6215421),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // 세로 배치 타임라인
             Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                 VerticalScheduleTimeline(
@@ -298,7 +329,7 @@ fun VerticalScheduleTimeline(
     val dotSize = 14.dp
     val rowHeight = 60.dp
     val timelineColor = Color.Gray
-    
+
     val totalRows = timeline.size
     val dotRows = timeline.size
 
@@ -307,7 +338,7 @@ fun VerticalScheduleTimeline(
     val iconTextSpacing = 8.dp // 아이콘과 텍스트 사이 공백
     val textWidth = 60.dp // 텍스트 예상 너비
     val rightPadding = 16.dp // 오른쪽 여백
-    
+
     // 전체 가로 길이 = 수직선과 아이콘 사이 공백 + 아이콘 크기 + 아이콘과 텍스트 사이 공백 + 텍스트 크기 + 오른쪽 여백
     val timelineWidthTotal = 16.dp + iconSize + iconTextSpacing + textWidth + rightPadding
 
@@ -315,7 +346,7 @@ fun VerticalScheduleTimeline(
     val dotCenters = List(dotRows) { i ->
         i * rowHeight + rowHeight / 2
     }
-    
+
     val timelineStart = if (dotCenters.isNotEmpty()) dotCenters.first() else 0.dp
     val timelineEnd = if (dotCenters.isNotEmpty()) dotCenters.last() else 0.dp
 
@@ -338,7 +369,7 @@ fun VerticalScheduleTimeline(
                         .background(timelineColor)
                 )
             }
-            
+
             // 각 일정
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -354,7 +385,7 @@ fun VerticalScheduleTimeline(
                                 .background(Color.White, CircleShape)
                                 .border(3.dp, Color.Black, CircleShape)
                         )
-                        
+
                         // 컨텐츠 (이모지 + 라벨)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
