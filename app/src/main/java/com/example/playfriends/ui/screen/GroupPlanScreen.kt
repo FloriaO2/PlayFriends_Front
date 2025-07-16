@@ -38,12 +38,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 
+import com.example.playfriends.ui.viewmodel.UserViewModel
+
 @Composable
 fun GroupPlanScreen(
     navController: NavController,
     groupId: String,
     categories: List<String>,
-    groupViewModel: GroupViewModel = viewModel()
+    groupViewModel: GroupViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel()
 ) {
     val backgroundColor = Color(0xFFF1FFF4)
     val cardColor = Color(0xFFFAFFFA)
@@ -56,15 +59,28 @@ fun GroupPlanScreen(
     val selectedGroup by groupViewModel.selectedGroup.collectAsState()
     val scheduleSuggestions by groupViewModel.scheduleSuggestions.collectAsState()
     val groupOperationState by groupViewModel.groupOperationState.collectAsState()
+    val groupLeft by groupViewModel.groupLeft.collectAsState()
+    val currentUser by userViewModel.user.collectAsState()
 
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
+        userViewModel.getCurrentUser()
         groupViewModel.clearScheduleSuggestions()
         groupViewModel.getGroup(groupId)
         if (categories.isNotEmpty()) {
             groupViewModel.createScheduleSuggestions(groupId, categories)
+        }
+    }
+
+    LaunchedEffect(groupLeft) {
+        if (groupLeft) {
+            Toast.makeText(context, "그룹을 나갔습니다.", Toast.LENGTH_SHORT).show()
+            navController.navigate("home") {
+                popUpTo("home") { inclusive = true }
+            }
+            groupViewModel.onGroupLeftHandled()
         }
     }
 
@@ -73,7 +89,7 @@ fun GroupPlanScreen(
             AppTopBar(
                 onLogoClick = { navController.navigate("home") },
                 onProfileClick = { navController.navigate("profile") },
-                profileInitial = "A"
+                profileInitial = currentUser?.username?.first()?.toString() ?: "A"
             )
         },
         containerColor = backgroundColor
@@ -178,7 +194,11 @@ fun GroupPlanScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
+                            IconButton(onClick = {
+                                currentUser?._id?.let { userId ->
+                                    groupViewModel.handleLeaveOrDeleteGroup(userId)
+                                }
+                            }) {
                                 Icon(Icons.Default.ExitToApp, contentDescription = "나가기", tint = Color(0xFF942020), modifier = Modifier.size(24.dp))
                             }
                         }

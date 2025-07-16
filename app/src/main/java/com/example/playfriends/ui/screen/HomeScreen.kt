@@ -288,7 +288,8 @@ fun HomeScreen(
         topBar = {
             AppTopBar(
                 onLogoClick = { navController.navigate("home") },
-                onProfileClick = { navController.navigate("profile") }
+                onProfileClick = { navController.navigate("profile") },
+                profileInitial = user?.username?.firstOrNull()?.toString() ?: ""
             )
         },
         floatingActionButton = {

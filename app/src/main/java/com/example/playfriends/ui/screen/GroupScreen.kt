@@ -105,6 +105,7 @@ fun GroupScreen(
     val group by groupViewModel.selectedGroup.collectAsState()
     val currentUser by userViewModel.user.collectAsState()
     val recommendedCategories by groupViewModel.recommendedCategories.collectAsState()
+    val groupLeft by groupViewModel.groupLeft.collectAsState()
 
     var checkedStates by remember { mutableStateOf(mapOf<String, Boolean>()) }
 
@@ -145,6 +146,16 @@ fun GroupScreen(
 
     LaunchedEffect(group) {
         Log.d("GroupScreen", "Group state updated in UI: $group")
+    }
+
+    LaunchedEffect(groupLeft) {
+        if (groupLeft) {
+            Toast.makeText(context, "그룹을 나갔습니다.", Toast.LENGTH_SHORT).show()
+            navController.navigate("home") {
+                popUpTo("home") { inclusive = true }
+            }
+            groupViewModel.onGroupLeftHandled()
+        }
     }
 
     LaunchedEffect(checkedStates.any { it.value } || selectedContentsCheckedStates.values.any { it }) {
@@ -303,7 +314,11 @@ fun GroupScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
-                                IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
+                                IconButton(onClick = {
+                                    currentUser?._id?.let { userId ->
+                                        groupViewModel.handleLeaveOrDeleteGroup(userId)
+                                    }
+                                }) {
                                     Icon(
                                         Icons.Default.ExitToApp,
                                         contentDescription = "나가기",
