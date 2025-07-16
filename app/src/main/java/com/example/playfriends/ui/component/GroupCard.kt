@@ -126,9 +126,9 @@ fun GroupCard(
                 titleColor = titleColor,
                 onMemberClick = { /* 그룹 멤버 보기 다이얼로그 표시 */ }
             )
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // 활동 스케줄
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -153,19 +153,14 @@ fun ScheduleTimeline(
     moveColors: List<Color>,
     moveIcons: List<String>,
     chipColor: Color,
-    leftChipWidth: Dp = 70.dp
+    leftChipWidth: Dp = 0.dp // 좌측 거리 영역 제거
 ) {
-    val timelineX = 70.dp // 수직선의 x좌표(왼쪽 여백)
     val timelineWidth = 2.dp
     val dotSize = 14.dp
     val rowHeight = 40.dp
-    val moveRowHeight = 24.dp
     val timelineColor = Color.Gray
-    val totalRows = activities.size + moves.size
-    val dotRows = activities.size // 점이 찍히는 줄 개수(=활동 개수)
-
+    val dotRows = activities.size
     val density = LocalDensity.current
-    var leftMaxWidthPx by remember { mutableStateOf(0) }
     var rightMaxWidthPx by remember { mutableStateOf(0) }
     val additionalPaddingPx = with(density) { 16.dp.toPx() }.toInt()
 
@@ -174,7 +169,6 @@ fun ScheduleTimeline(
         var y = 0.dp
         for (j in 0 until i) {
             y += rowHeight
-            if (j < moves.size) y += moveRowHeight
         }
         y += rowHeight / 2
         y
@@ -182,18 +176,16 @@ fun ScheduleTimeline(
     val timelineStart = if (dotCenters.isNotEmpty()) dotCenters.first() else 0.dp
     val timelineEnd = if (dotCenters.isNotEmpty()) dotCenters.last() else 0.dp
 
-    val timelineWidthTotal = with(density) { (leftMaxWidthPx + rightMaxWidthPx + 24).toDp() }
+    val timelineWidthTotal = with(density) { (rightMaxWidthPx + 24).toDp() }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start // 좌측 정렬
     ) {
         Box(
             modifier = Modifier
                 .width(timelineWidthTotal)
-                .height((0 until totalRows).fold(0.dp) { acc, i ->
-                    acc + if (i % 2 == 1 && i / 2 < moves.size) moveRowHeight else rowHeight
-                })
+                .height(rowHeight * activities.size)
         ) {
             // 수직선(한 번만 그림, 시작/끝을 점의 중앙에 맞춤)
             if (dotCenters.isNotEmpty()) {
@@ -201,7 +193,7 @@ fun ScheduleTimeline(
                     modifier = Modifier
                         .width(timelineWidth)
                         .height(timelineEnd - timelineStart)
-                        .offset(x = timelineX, y = timelineStart)
+                        .offset(x = 0.dp, y = timelineStart)
                         .background(timelineColor)
                 )
             }
@@ -209,73 +201,38 @@ fun ScheduleTimeline(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                var activityIdx = 0
-                var moveIdx = 0
-                for (i in 0 until totalRows) {
-                    val isActivityRow = i % 2 == 0 && activityIdx < activities.size
-                    val isMoveRow = i % 2 == 1 && moveIdx < moves.size
-                    val thisRowHeight = if (isMoveRow) moveRowHeight else rowHeight
-                    Box(Modifier.height(thisRowHeight)) {
+                for (activityIdx in activities.indices) {
+                    Box(Modifier.height(rowHeight)) {
                         // 점: 활동(일정) 줄에만 표시
-                        if (isActivityRow) {
+                        Box(
+                            modifier = Modifier
+                                .size(dotSize)
+                                .offset(x = -dotSize / 2)
+                                .align(Alignment.CenterStart)
+                                .background(Color.White, CircleShape)
+                                .border(3.dp, Color.Black, CircleShape)
+                        )
+                        // 일정(왼쪽에 붙여서 출력)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .offset(x = 24.dp)
+                                .wrapContentWidth()
+                                .onGloballyPositioned { coordinates ->
+                                    rightMaxWidthPx = maxOf(rightMaxWidthPx, coordinates.size.width + additionalPaddingPx)
+                                }
+                        ) {
+                            Text(activities[activityIdx].first, fontSize = 14.sp, color = Color.Gray)
+                            Spacer(modifier = Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
-                                    .size(dotSize)
-                                    .offset(x = timelineX - dotSize / 2)
-                                    .align(Alignment.CenterStart)
-                                    .background(Color.White, CircleShape)
-                                    .border(3.dp, Color.Black, CircleShape)
-                            )
-                        }
-                        // 오른쪽: 일정
-                        if (isActivityRow) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .offset(x = timelineX + 24.dp)
-                                    .wrapContentWidth()
-                                    .onGloballyPositioned { coordinates ->
-                                        rightMaxWidthPx = maxOf(rightMaxWidthPx, coordinates.size.width + additionalPaddingPx)
-                                    }
+                                    .clip(RoundedCornerShape(50))
+                                    .background(chipColor)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
-                                Text(activities[activityIdx].first, fontSize = 14.sp, color = Color.Gray)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(chipColor)
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                ) {
-                                    Text("${activities[activityIdx].third} ${activities[activityIdx].second}", fontSize = 16.sp)
-                                }
+                                Text("${activities[activityIdx].third} ${activities[activityIdx].second}", fontSize = 16.sp)
                             }
-                            activityIdx++
-                        } else if (isMoveRow) {
-                            // 왼쪽: 이동수단/시간
-                            Surface(
-                                shape = RoundedCornerShape(topStart = 50.dp, bottomStart = 50.dp, topEnd = 0.dp, bottomEnd = 0.dp),
-                                color = moveColors.getOrNull(moveIdx) ?: Color.LightGray,
-                                modifier = Modifier
-                                    .align(Alignment.CenterStart)
-                                    .offset(x = timelineX - leftChipWidth)
-                                    .width(leftChipWidth)
-                                    .height(20.dp)
-                                    .onGloballyPositioned { coordinates ->
-                                        leftMaxWidthPx = maxOf(leftMaxWidthPx, coordinates.size.width)
-                                    }
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
-                                ) {
-                                    Text(moveIcons.getOrNull(moveIdx) ?: "", fontSize = 14.sp)
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(moves.getOrNull(moveIdx) ?: "", fontSize = 14.sp)
-                                }
-                            }
-                            moveIdx++
                         }
                     }
                 }
