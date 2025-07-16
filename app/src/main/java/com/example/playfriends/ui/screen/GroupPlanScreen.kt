@@ -286,7 +286,12 @@ fun PlanCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // 세로 배치 타임라인
-            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth()
+                    .heightIn(min = 120.dp)
+            ) {
                 VerticalScheduleTimeline(
                     timeline = suggestion.scheduled_activities,
                     chipColor = chipColor,
@@ -297,7 +302,7 @@ fun PlanCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
+            Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
                 Button(
                     onClick = {
                         groupViewModel.confirmSchedule(suggestion)
@@ -324,10 +329,10 @@ fun VerticalScheduleTimeline(
     moveWalkColor: Color,
     moveSubwayColor: Color
 ) {
-    val timelineX = 20.dp // 수직선을 왼쪽으로 이동
+    val timelineX = 0.dp // 수직선을 카드의 왼쪽에 최대한 붙임
     val timelineWidth = 2.dp
     val dotSize = 14.dp
-    val rowHeight = 60.dp
+    val rowHeight = 72.dp
     val timelineColor = Color.Gray
 
     val totalRows = timeline.size
@@ -337,10 +342,8 @@ fun VerticalScheduleTimeline(
     val iconSize = 16.dp // 아이콘(이모지) 크기
     val iconTextSpacing = 8.dp // 아이콘과 텍스트 사이 공백
     val textWidth = 60.dp // 텍스트 예상 너비
-    val rightPadding = 16.dp // 오른쪽 여백
-
-    // 전체 가로 길이 = 수직선과 아이콘 사이 공백 + 아이콘 크기 + 아이콘과 텍스트 사이 공백 + 텍스트 크기 + 오른쪽 여백
-    val timelineWidthTotal = 16.dp + iconSize + iconTextSpacing + textWidth + rightPadding
+    val rightPadding = 0.dp // 오른쪽 여백 최소화
+    val timelineWidthTotal = 96.dp // 전체 가로 길이 더 줄임
 
     // 점의 중앙 y좌표 계산
     val dotCenters = List(dotRows) { i ->
@@ -391,37 +394,45 @@ fun VerticalScheduleTimeline(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .align(Alignment.CenterStart)
-                                .offset(x = timelineX + 24.dp)
-                                .width(textWidth + iconSize + iconTextSpacing)
+                                .offset(x = timelineX + 8.dp)
+                                .fillMaxWidth()
                         ) {
                             val formatter = DateTimeFormatter.ofPattern("HH:mm")
                             val startTime = LocalDateTime.parse(item.start_time).format(formatter)
                             val endTime = LocalDateTime.parse(item.end_time).format(formatter)
 
-                            Text(
-                                text = when (item.category) {
-                                    "운동" -> "🏀"
-                                    "카페" -> "☕"
-                                    "공연" -> "🎵"
-                                    "쇼핑" -> "🛒"
-                                    "점심" -> "🍜"
-                                    "저녁" -> "🍖"
-                                    "노래방" -> "🎤"
-                                    else -> "📍"
-                                },
-                                fontSize = 16.sp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Column {
-                                Text(
-                                    text = item.name,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
+                                Box(Modifier.fillMaxWidth()) {
+                                    Text(
+                                        text = item.name,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        lineHeight = 15.sp,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .align(Alignment.TopStart)
+                                            .padding(start = 16.dp)
+                                    )
+                                    Text(
+                                        text = when (item.category) {
+                                            "식당" -> "🍚"
+                                            "주점" -> "🍺"
+                                            "카페" -> "☕"
+                                            else -> "📍"
+                                        },
+                                        fontSize = 12.sp,
+                                        lineHeight = 15.sp,
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                    )
+                                }
                                 Text(
                                     text = "$startTime - $endTime",
                                     fontSize = 12.sp,
-                                    color = Color.Gray
+                                    color = Color.Gray,
+                                    lineHeight = 12.sp,
+                                    modifier = Modifier.padding(top = 0.dp)
                                 )
                             }
                         }
