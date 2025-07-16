@@ -41,7 +41,7 @@ object RetrofitClient {
     private fun getBaseUrl(): String {
         val baseUrl = if (isEmulator()) {
             // 에뮬레이터일 때는 10.0.2.2 사용 (호스트 머신의 localhost)
-            "http://10.0.2.2:8000/"
+            "https://playfriends-backend-432865170811.us-central1.run.app/"
         } else {
             // 실제 기기일 때는 192.249.27.32 사용
             "https://playfriends-backend-432865170811.us-central1.run.app/"

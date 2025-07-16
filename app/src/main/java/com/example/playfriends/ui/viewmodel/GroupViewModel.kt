@@ -29,6 +29,24 @@ class GroupViewModel : ViewModel() {
     private val _scheduleSuggestions = MutableStateFlow<List<ScheduleSuggestionOutput>>(emptyList())
     val scheduleSuggestions: StateFlow<List<ScheduleSuggestionOutput>> = _scheduleSuggestions.asStateFlow()
 
+    // 여러 그룹의 상세 정보를 관리하는 StateFlow
+    private val _detailedGroups = MutableStateFlow<List<GroupDetailResponse>>(emptyList())
+    val detailedGroups: StateFlow<List<GroupDetailResponse>> = _detailedGroups.asStateFlow()
+
+    // 여러 그룹의 상세 정보를 한 번에 불러오는 함수
+    fun fetchDetailedGroups(groupIds: List<String>) {
+        viewModelScope.launch {
+            val details = mutableListOf<GroupDetailResponse>()
+            for (id in groupIds) {
+                val result = groupRepository.getGroup(id)
+                result.fold(
+                    onSuccess = { group -> details.add(group) },
+                    onFailure = { /* 실패 시 무시 */ }
+                )
+            }
+            _detailedGroups.value = details
+        }
+    }
 
     // 그룹 작업 상태
     sealed class GroupOperationState {
@@ -37,7 +55,7 @@ class GroupViewModel : ViewModel() {
         data class Success(val message: String) : GroupOperationState()
         data class Error(val message: String) : GroupOperationState()
     }
-    
+
     // 모든 그룹 조회
     fun getAllGroups() {
         viewModelScope.launch {
@@ -55,7 +73,7 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 그룹 생성
     fun createGroup(groupname: String, starttime: String, endtime: String? = null) {
         viewModelScope.launch {
@@ -77,7 +95,7 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 특정 그룹 조회
     fun getGroup(groupId: String) {
         viewModelScope.launch {
@@ -98,7 +116,7 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 그룹 수정
     fun updateGroup(groupId: String, groupUpdate: GroupUpdate) {
         viewModelScope.launch {
@@ -117,12 +135,12 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 그룹 삭제
     fun deleteGroup(groupId: String) {
         viewModelScope.launch {
             _groupOperationState.value = GroupOperationState.Loading
-            
+
             val result = groupRepository.deleteGroup(groupId)
             result.fold(
                 onSuccess = {
@@ -139,12 +157,12 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 그룹 참여
     fun joinGroup(groupId: String) {
         viewModelScope.launch {
             _groupOperationState.value = GroupOperationState.Loading
-            
+
             val result = groupRepository.joinGroup(groupId)
             result.fold(
                 onSuccess = { message ->
@@ -158,12 +176,12 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 그룹 탈퇴
     fun leaveGroup(groupId: String) {
         viewModelScope.launch {
             _groupOperationState.value = GroupOperationState.Loading
-            
+
             val result = groupRepository.leaveGroup(groupId)
             result.fold(
                 onSuccess = { message ->
@@ -177,12 +195,12 @@ class GroupViewModel : ViewModel() {
             )
         }
     }
-    
+
     // 그룹 선택
     fun selectGroup(group: GroupDetailResponse?) {
         _selectedGroup.value = group
     }
-    
+
     // 작업 상태 초기화
     fun resetOperationState() {
         _groupOperationState.value = GroupOperationState.Idle
