@@ -38,12 +38,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 
+import com.example.playfriends.ui.viewmodel.UserViewModel
+
 @Composable
 fun GroupPlanScreen(
     navController: NavController,
     groupId: String,
     categories: List<String>,
-    groupViewModel: GroupViewModel = viewModel()
+    groupViewModel: GroupViewModel = viewModel(),
+    userViewModel: UserViewModel = viewModel()
 ) {
     val backgroundColor = Color(0xFFF1FFF4)
     val cardColor = Color(0xFFFAFFFA)
@@ -56,15 +59,39 @@ fun GroupPlanScreen(
     val selectedGroup by groupViewModel.selectedGroup.collectAsState()
     val scheduleSuggestions by groupViewModel.scheduleSuggestions.collectAsState()
     val groupOperationState by groupViewModel.groupOperationState.collectAsState()
+    val groupLeft by groupViewModel.groupLeft.collectAsState()
+    val scheduleConfirmed by groupViewModel.scheduleConfirmed.collectAsState()
+    val currentUser by userViewModel.user.collectAsState()
 
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
+        userViewModel.getCurrentUser()
         groupViewModel.clearScheduleSuggestions()
         groupViewModel.getGroup(groupId)
         if (categories.isNotEmpty()) {
             groupViewModel.createScheduleSuggestions(groupId, categories)
+        }
+    }
+
+    LaunchedEffect(groupLeft) {
+        if (groupLeft) {
+            Toast.makeText(context, "그룹을 나갔습니다.", Toast.LENGTH_SHORT).show()
+            navController.navigate("home") {
+                popUpTo("home") { inclusive = true }
+            }
+            groupViewModel.onGroupLeftHandled()
+        }
+    }
+
+    LaunchedEffect(scheduleConfirmed) {
+        if (scheduleConfirmed) {
+            Toast.makeText(context, "일정이 확정되었습니다.", Toast.LENGTH_SHORT).show()
+            navController.navigate("group/${selectedGroup?._id}") {
+                popUpTo("groupPlan") { inclusive = true }
+            }
+            groupViewModel.onScheduleConfirmedHandled()
         }
     }
 
@@ -73,7 +100,7 @@ fun GroupPlanScreen(
             AppTopBar(
                 onLogoClick = { navController.navigate("home") },
                 onProfileClick = { navController.navigate("profile") },
-                profileInitial = "A"
+                profileInitial = currentUser?.username?.first()?.toString() ?: "A"
             )
         },
         containerColor = backgroundColor
@@ -178,7 +205,11 @@ fun GroupPlanScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
+                            IconButton(onClick = {
+                                currentUser?._id?.let { userId ->
+                                    groupViewModel.handleLeaveOrDeleteGroup(userId)
+                                }
+                            }) {
                                 Icon(Icons.Default.ExitToApp, contentDescription = "나가기", tint = Color(0xFF942020), modifier = Modifier.size(24.dp))
                             }
                         }
@@ -235,7 +266,8 @@ fun GroupPlanScreen(
                             moveWalkColor = moveWalkColor,
                             moveSubwayColor = moveSubwayColor,
                             navController = navController,
-                            groupViewModel = groupViewModel
+                            groupViewModel = groupViewModel,
+                            isLoading = groupOperationState is GroupViewModel.GroupOperationState.Loading
                         )
                     }
                 }
@@ -254,7 +286,8 @@ fun PlanCard(
     moveWalkColor: Color,
     moveSubwayColor: Color,
     navController: NavController,
-    groupViewModel: GroupViewModel
+    groupViewModel: GroupViewModel,
+    isLoading: Boolean
 ) {
     val cardColor = Color(0xFFFAFFFA)
 
@@ -305,17 +338,23 @@ fun PlanCard(
             Box(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
                 Button(
                     onClick = {
-                        groupViewModel.confirmSchedule(suggestion)
-                        // GroupScreen으로 돌아가기
-                        navController.navigate("group") {
-                            popUpTo("groupPlan") { inclusive = true }
+                        if (!isLoading) {
+                            groupViewModel.confirmSchedule(suggestion)
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
-                    shape = RoundedCornerShape(30.dp)
+                    shape = RoundedCornerShape(30.dp),
+                    enabled = !isLoading
                 ) {
-                    Text("확정하기", color = Color.White)
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text("확정하기", color = Color.White)
+                    }
                 }
             }
         }

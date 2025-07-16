@@ -29,6 +29,12 @@ class GroupViewModel : ViewModel() {
     private val _scheduleSuggestions = MutableStateFlow<List<ScheduleSuggestionOutput>>(emptyList())
     val scheduleSuggestions: StateFlow<List<ScheduleSuggestionOutput>> = _scheduleSuggestions.asStateFlow()
 
+    private val _groupLeft = MutableStateFlow(false)
+    val groupLeft: StateFlow<Boolean> = _groupLeft.asStateFlow()
+
+    private val _scheduleConfirmed = MutableStateFlow(false)
+    val scheduleConfirmed: StateFlow<Boolean> = _scheduleConfirmed.asStateFlow()
+
     // 여러 그룹의 상세 정보를 관리하는 StateFlow
     private val _detailedGroups = MutableStateFlow<List<GroupDetailResponse>>(emptyList())
     val detailedGroups: StateFlow<List<GroupDetailResponse>> = _detailedGroups.asStateFlow()
@@ -150,6 +156,7 @@ class GroupViewModel : ViewModel() {
                         _selectedGroup.value = null
                     }
                     _groupOperationState.value = GroupOperationState.Success("그룹이 삭제되었습니다")
+                    _groupLeft.value = true
                 },
                 onFailure = { exception ->
                     _groupOperationState.value = GroupOperationState.Error(exception.message ?: "그룹 삭제 실패")
@@ -169,6 +176,7 @@ class GroupViewModel : ViewModel() {
                     _groupOperationState.value = GroupOperationState.Success(message.message)
                     // 그룹 목록 새로고침
                     getAllGroups()
+                    _groupLeft.value = true
                 },
                 onFailure = { exception ->
                     _groupOperationState.value = GroupOperationState.Error(exception.message ?: "그룹 참여 실패")
@@ -204,6 +212,25 @@ class GroupViewModel : ViewModel() {
     // 작업 상태 초기화
     fun resetOperationState() {
         _groupOperationState.value = GroupOperationState.Idle
+    }
+
+    fun onGroupLeftHandled() {
+        _groupLeft.value = false
+    }
+
+    fun onScheduleConfirmedHandled() {
+        _scheduleConfirmed.value = false
+    }
+
+    fun handleLeaveOrDeleteGroup(userId: String) {
+        viewModelScope.launch {
+            val group = _selectedGroup.value ?: return@launch
+            if (group.owner_id == userId) {
+                deleteGroup(group._id)
+            } else {
+                leaveGroup(group._id)
+            }
+        }
     }
 
     fun clearScheduleSuggestions() {
@@ -261,6 +288,7 @@ class GroupViewModel : ViewModel() {
                     // 현재 선택된 그룹 정보 업데이트
                     _selectedGroup.value = updatedGroup
                     _groupOperationState.value = GroupOperationState.Success("스케줄을 확정했습니다.")
+                    _scheduleConfirmed.value = true
                 },
                 onFailure = { exception ->
                     _groupOperationState.value = GroupOperationState.Error(exception.message ?: "스케줄 확정 실패")
