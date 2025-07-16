@@ -57,7 +57,6 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.res.painterResource
 import com.example.playfriends.R
 import java.text.SimpleDateFormat
@@ -128,7 +127,7 @@ fun GroupScreen(
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMsg by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(groupId) {
         groupViewModel.getGroup(groupId)
         userViewModel.getCurrentUser()
     }
@@ -149,11 +148,11 @@ fun GroupScreen(
     }
 
     LaunchedEffect(checkedStates.any { it.value } || selectedContentsCheckedStates.values.any { it }) {
-                if (checkedStates.any { it.value } || selectedContentsCheckedStates.values.any { it }) {
-                    scrollState.animateScrollTo(scrollState.maxValue)
-                }
-            }
-            
+        if (checkedStates.any { it.value } || selectedContentsCheckedStates.values.any { it }) {
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
     Scaffold(
         topBar = {
             AppTopBar(
@@ -177,421 +176,293 @@ fun GroupScreen(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("그룹 정보를 불러오는 중입니다...")
             }
-            return@Scaffold
-        }
+        } else {
+            val isOwner = currentGroup.owner_id == user._id
+            Log.d("GroupScreen", "isOwner: $isOwner, currentUser: ${user._id}, groupOwner: ${currentGroup.owner_id}")
 
-        val isOwner = group?.owner_id == currentUser?._id
-
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp)
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 그룹명/날짜 + 초대코드/위치 (2줄로 분리, 양끝 배치)
-            Column(
+            LazyColumn(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 0.dp)
+                    .padding(padding)
+                    .fillMaxSize()
+                    .padding(start = 30.dp, end = 30.dp, top = 10.dp)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        group!!.groupname,
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = titleColor
-                    )
-                    // 일정 포맷팅: 25/07/20 00:00 - 25/07/20 20:00
-                    val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-                    val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
-                    val start = try {
-                        outputFormat.format(inputFormat.parse(group!!.starttime) ?: "")
-                    } catch (e: Exception) { "" }
-                    val end = try {
-                        group!!.endtime?.let { outputFormat.format(inputFormat.parse(it) ?: "") } ?: ""
-                    } catch (e: Exception) { "" }
-                    val timeStr = if (end.isNotBlank()) "$start - $end" else start
-                    Text(
-                        timeStr,
-                        fontSize = 14.sp,
-                        color = Color.Black,
-                        textAlign = TextAlign.End,
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 그룹명/날짜 + 초대코드/위치 (2줄로 분리, 양끝 배치)
+                    Column(
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 12.dp)
-                    )
-                }
-                // 하단: 초대코드 - 위치
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(group!!._id))
-                            Toast.makeText(context, "복사가 완료되었습니다.", Toast.LENGTH_SHORT).show()
-                        },
-                        contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
-                        modifier = Modifier.height(IntrinsicSize.Min)
+                            .fillMaxWidth()
+                            .padding(horizontal = 0.dp)
                     ) {
-                        Text(group!!._id, fontSize = 12.sp, color = Color.Gray)
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.LocationOn, contentDescription = "location", modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("대전", fontSize = 16.sp)
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(15.dp))
-
-                // 참여자 카드
-                Card(
-                    shape = RoundedCornerShape(12.dp),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = cardColor),
-                    elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+                                .padding(horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Person, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    (currentGroup.members.find { it.id == currentGroup.owner_id }?.name ?: "Unknown") + " (방장)",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                            Text(
+                                currentGroup.groupname,
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = titleColor
+                            )
+                            // 일정 포맷팅: 25/07/20 00:00 - 25/07/20 20:00
+                            val inputFormat =
+                                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                            val outputFormat = SimpleDateFormat("yy/MM/dd HH:mm", Locale.getDefault())
+                            val start = try {
+                                outputFormat.format(inputFormat.parse(currentGroup.starttime) ?: "")
+                            } catch (e: Exception) {
+                                ""
                             }
-                            IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
-                                Icon(Icons.Default.ExitToApp, contentDescription = "나가기", tint = Color(0xFF942020), modifier = Modifier.size(24.dp))
+                            val end = try {
+                                currentGroup.endtime?.let {
+                                    outputFormat.format(
+                                        inputFormat.parse(it) ?: ""
+                                    )
+                                } ?: ""
+                            } catch (e: Exception) {
+                                ""
+                            }
+                            val timeStr = if (end.isNotEmpty()) "$start - $end" else start
+                            Text(
+                                timeStr,
+                                fontSize = 14.sp,
+                                color = Color.Black,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 12.dp)
+                            )
+                        }
+                        // 하단: 초대코드 - 위치
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight()
+
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(currentGroup._id))
+                                    Toast.makeText(context, "복사가 완료되었습니다.", Toast.LENGTH_SHORT).show()
+                                },
+                                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                                modifier = Modifier.height(IntrinsicSize.Min)
+                            ) {
+                                Text(currentGroup._id, fontSize = 12.sp, color = Color.Gray)
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Default.LocationOn,
+                                    contentDescription = "location",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("대전", fontSize = 16.sp)
                             }
                         }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        currentGroup.members.chunked(2).forEach { rowMembers ->
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    // 참여자 카드
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        colors = androidx.compose.material3.CardDefaults.cardColors(
+                            containerColor = cardColor
+                        ),
+                        elevation = androidx.compose.material3.CardDefaults.cardElevation(
+                            defaultElevation = 2.dp
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                rowMembers.forEach { member ->
-                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                        Icon(Icons.Default.Person, contentDescription = null)
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(member.name, fontSize = 16.sp)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = null
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        (currentGroup.members.find { it.id == currentGroup.owner_id }?.name
+                                            ?: "Unknown") + " (방장)",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                IconButton(onClick = { /* TODO: 그룹 나가기 로직 */ }) {
+                                    Icon(
+                                        Icons.Default.ExitToApp,
+                                        contentDescription = "나가기",
+                                        tint = Color(0xFF942020),
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            currentGroup.members.chunked(2).forEach { rowMembers ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    rowMembers.forEach { member ->
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Person,
+                                                contentDescription = null
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(member.name, fontSize = 16.sp)
+                                        }
+                                    }
+                                    if (rowMembers.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
                                     }
                                 }
-                                if (rowMembers.size == 1) {
-                                    Spacer(modifier = Modifier.weight(1f))
-                                }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(30.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFFE0E0E0)))
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // PlayPreferences를 이용한 육각형 그래프
-                currentGroup.play_preferences?.let {
+                item {
+                    Spacer(modifier = Modifier.height(30.dp))
                     Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        HexagonGraph(
-                            playPreferences = it,
-                            modifier = Modifier
-                                .size(300.dp) // 그래프 크기 조정
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(20.dp))
+                        modifier = Modifier.fillMaxWidth().height(1.dp)
+                            .background(Color(0xFFE0E0E0))
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                if (isOwner) {
-                    // Owner UI
-                    if (currentGroup.schedule == null) {
-                        OwnerScheduleCreationUI(
-                            groupName = currentGroup.groupname,
-                            titleColor = titleColor,
-                            cardColor = cardColor,
-                            checkboxColor = checkboxColor,
-                            recommendedCategories = recommendedCategories,
-                            checkedStates = checkedStates,
-                            onCheckedChange = { newStates -> checkedStates = newStates },
-                            onEditClick = { showPopup = true },
-                            onRecommendClick = {
-                                val selectedCategories = checkedStates.filter { it.value }.keys.toList()
-                                val categoriesString = selectedCategories.joinToString(",")
-                                navController.navigate("groupPlan/${currentGroup._id}?categories=$categoriesString")
-                            },
-                            showPopup = showPopup,
-                            onDismissPopup = { showPopup = false },
-                            additionalContents = additionalContents,
-                            selectedContents = selectedContents,
-                        onUpdateSelectedContents = { contents ->
-                            selectedContents.clear()
-                            selectedContents.addAll(contents)
-                            val newCheckedStates = checkedStates.toMutableMap()
-                            contents.forEach { content ->
-                                if (!newCheckedStates.containsKey(content)) {
-                                    newCheckedStates[content] = true
-                                }
+                    // PlayPreferences를 이용한 육각형 그래프
+                    currentGroup.play_preferences?.let {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            HexagonGraph(
+                                playPreferences = it,
+                                modifier = Modifier
+                                    .size(300.dp) // 그래프 크기 조정
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    if (isOwner) {
+                        // Owner UI
+                        if (currentGroup.schedule == null) {
+                            // 기존 OwnerScheduleCreationUI 호출부 삭제
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(vertical = 50.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "아직 확정된 스케줄이 없습니다.",
+                                    fontSize = 16.sp,
+                                    color = Color.Gray
+                                )
                             }
-                            checkedStates = newCheckedStates
+                        } else {
+                            // Owner & Schedule exists
+                            ConfirmedScheduleUI(
+                                schedule = currentGroup.schedule,
+                                titleColor = titleColor,
+                                distancesKm = currentGroup.distances_km
+                            )
                         }
-                        )
                     } else {
-                        // Owner & Schedule exists
-                        ConfirmedScheduleUI(schedule = currentGroup.schedule, titleColor = titleColor)
-                    }
-                } else {
-                    // Member UI
-                    if (currentGroup.schedule != null) {
-                        ConfirmedScheduleUI(schedule = currentGroup.schedule, titleColor = titleColor)
-                    } else {
-                        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 50.dp), contentAlignment = Alignment.Center) {
-                            Text("아직 확정된 스케줄이 없습니다.", fontSize = 16.sp, color = Color.Gray)
+                        // Member UI
+                        if (currentGroup.schedule != null) {
+                            ConfirmedScheduleUI(
+                                schedule = currentGroup.schedule,
+                                titleColor = titleColor,
+                                distancesKm = currentGroup.distances_km
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                                    .padding(vertical = 50.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "아직 확정된 스케줄이 없습니다.",
+                                    fontSize = 16.sp,
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
 
 @Composable
-fun OwnerScheduleCreationUI(
-    groupName: String,
+fun ConfirmedScheduleUI(
+    schedule: List<com.example.playfriends.data.model.ScheduledActivity>,
     titleColor: Color,
-    cardColor: Color,
-    checkboxColor: Color,
-    recommendedCategories: List<String>,
-    checkedStates: Map<String, Boolean>,
-    onCheckedChange: (Map<String, Boolean>) -> Unit,
-    onEditClick: () -> Unit,
-    onRecommendClick: () -> Unit,
-    showPopup: Boolean,
-    onDismissPopup: () -> Unit,
-    additionalContents: List<String>,
-    selectedContents: List<String>,
-    onUpdateSelectedContents: (List<String>) -> Unit
+    distancesKm: List<Double>? = null
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // 취향 분석 레포트 타이틀
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Text(
-            buildAnnotatedString {
-                withStyle(style = SpanStyle(color = titleColor, fontWeight = FontWeight.Bold)) {
-                append(groupName)
-                }
-                append("을 위한 취향 분석 레포트")
-            },
-            fontSize = 18.sp
+    val activities = schedule.map { activity ->
+        val timeInputFormat = java.text.SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss",
+            java.util.Locale.getDefault()
+        )
+        val timeOutputFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val activityStart = try {
+            timeOutputFormat.format(
+                timeInputFormat.parse(activity.start_time) ?: ""
             )
+        } catch (e: Exception) {
+            ""
         }
-
-        Spacer(modifier = Modifier.height(15.dp))
+        val activityEnd = try {
+            timeOutputFormat.format(timeInputFormat.parse(activity.end_time) ?: "")
+        } catch (e: Exception) {
+            ""
+        }
+        val timeStr = "$activityStart - $activityEnd"
+        val emoji = when (activity.category) {
+            "운동" -> "🏀"
+            "카페" -> "☕"
+            "공연" -> "🎵"
+            "쇼핑" -> "🛒"
+            "점심" -> "🍜"
+            "저녁" -> "🍖"
+            "노래방" -> "🎤"
+            "식당" -> "🍽️"
+            "영화관" -> "🎬"
+            "박물관" -> "🏛️"
+            else -> "📍"
+        }
+        Triple(timeStr, activity.name, emoji)
     }
-
-    if (showPopup) {
-        var tempSelectedContents by remember(selectedContents) { mutableStateOf(selectedContents.toMutableList()) }
-
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = onDismissPopup,
-            title = {
-                Text(
-                    "컨텐츠 선택",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                val selected = additionalContents.filter { it in tempSelectedContents }
-                val unselected = additionalContents.filterNot { it in tempSelectedContents }
-
-                Box(
-                    modifier = Modifier
-                        .heightIn(max = 300.dp)
-                ) {
-                    LazyColumn {
-                        item {
-                            Text("선택됨", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.DarkGray)
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        items(selected) { content ->
-                            SelectableContentRow(
-                                content = content,
-                                isSelected = true,
-                                checkboxColor = checkboxColor,
-                                onCheckedChange = {
-                                    tempSelectedContents = tempSelectedContents.toMutableList().apply { remove(content) }
-                                }
-                            )
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("추가하기", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = Color.DarkGray)
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                        items(unselected) { content ->
-                            SelectableContentRow(
-                                content = content,
-                                isSelected = false,
-                                checkboxColor = checkboxColor,
-                                onCheckedChange = {
-                                    tempSelectedContents = tempSelectedContents.toMutableList().apply { add(content) }
-                                }
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        onUpdateSelectedContents(tempSelectedContents)
-                        onDismissPopup()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = checkboxColor)
-                ) {
-                    Text("확인")
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = onDismissPopup,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-                ) {
-                    Text("취소")
-                }
-            }
-        )
-    }
-
-    Spacer(modifier = Modifier.height(30.dp))
-
-    // 놀이 콘텐츠 추천 카드
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = cardColor),
-        elevation = androidx.compose.material3.CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+    val moves = distancesKm?.map { distance -> "${(distance * 1000).toInt()}m" } ?: emptyList()
+    val moveWalkColor = Color(0xFFF1EFE9)
+    val moveSubwayColor = Color(0xFFC9EDD8)
+    val chipColor = Color(0xFFE0F8CD)
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text("취향에 맞춰 추천받은 컨텐츠", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = titleColor)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            val allContents = (recommendedCategories + selectedContents).distinct()
-            recommendedCategories.forEach { option ->
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Checkbox(
-                        checked = checkedStates[option] ?: false,
-                        onCheckedChange = { isChecked ->
-                            onCheckedChange(checkedStates.toMutableMap().apply { this[option] = isChecked })
-                        },
-                        colors = CheckboxDefaults.colors(checkedColor = checkboxColor),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = option, fontSize = 16.sp)
-                }
-                Spacer(modifier = Modifier.height(7.dp))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text("내가 추가한 컨텐츠", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = titleColor)
-            Spacer(modifier = Modifier.height(12.dp))
-
-            selectedContents.forEach { option ->
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Checkbox(
-                        checked = checkedStates[option] ?: false,
-                        onCheckedChange = { isChecked ->
-                            onCheckedChange(checkedStates.toMutableMap().apply { this[option] = isChecked })
-                        },
-                        colors = CheckboxDefaults.colors(checkedColor = checkboxColor),
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = option, fontSize = 16.sp)
-                }
-                Spacer(modifier = Modifier.height(7.dp))
-            }
-
-            Button(
-                onClick = onEditClick,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9CCC65)),
-                shape = RoundedCornerShape(50),
-                modifier = Modifier.align(Alignment.End)
-            ) {
-                Icon(Icons.Default.Edit, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Edit")
-            }
-        }
-    }
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    if (checkedStates.any { it.value }) {
-        Button(
-            onClick = onRecommendClick,
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFA6D8A8)),
-            shape = RoundedCornerShape(32.dp)
-        ) {
-            Text("상세 계획 추천 받으러 가기", color = Color.White, fontSize = 16.sp)
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-    }
-}
-
-@Composable
-private fun SelectableContentRow(
-    content: String,
-    isSelected: Boolean,
-    checkboxColor: Color,
-    onCheckedChange: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
-        Checkbox(
-            checked = isSelected,
-            onCheckedChange = { onCheckedChange() },
-            colors = CheckboxDefaults.colors(checkedColor = checkboxColor)
-        )
-        Text(content, fontSize = 16.sp)
-    }
-}
-
-@Composable
-fun ConfirmedScheduleUI(schedule: List<com.example.playfriends.data.model.ScheduledActivity>, titleColor: Color) {
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "확정된 스케줄",
             fontSize = 18.sp,
@@ -599,16 +470,21 @@ fun ConfirmedScheduleUI(schedule: List<com.example.playfriends.data.model.Schedu
             color = titleColor
         )
         Spacer(modifier = Modifier.height(20.dp))
-        Card(
+        androidx.compose.material3.Card(
             shape = RoundedCornerShape(12.dp),
-            colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = Color.White),
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                schedule.forEach { activity ->
-                    Text("${activity.start_time} - ${activity.end_time}: ${activity.name}", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                com.example.playfriends.ui.component.ScheduleTimeline(
+                    activities = activities,
+                    moves = moves,
+                    moveColors = List(moves.size) { if (it % 2 == 0) moveWalkColor else moveSubwayColor },
+                    moveIcons = List(moves.size) { if (it % 2 == 0) "🚶" else "🚇" },
+                    chipColor = chipColor
+                )
             }
         }
     }
